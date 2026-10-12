@@ -1,0 +1,116 @@
+/* Фирменная тема админки Kaafi (всегда светлая) */
+:root, html[data-theme="light"], html[data-theme="dark"]{
+  --primary:#8B5E3C; --secondary:#2E1F16; --accent:#B8934F;
+  --primary-fg:#fff;
+  --body-fg:#2E1F16; --body-bg:#F6EEDC; --body-quiet-color:#7A6A52; --body-loud-color:#2E1F16;
+  --header-color:#E3D2A5; --header-branding-color:#fff; --header-bg:#2E1F16; --header-link-color:#fff;
+  --breadcrumbs-fg:#E3D2A5; --breadcrumbs-link-fg:#fff; --breadcrumbs-bg:#8B5E3C;
+  --link-fg:#8B5E3C; --link-hover-color:#B8934F; --link-selected-fg:#8B5E3C;
+  --hairline-color:#E3D2A5; --border-color:#E3D2A5;
+  --error-fg:#B3261E; --message-success-bg:#E7F3E8; --message-warning-bg:#FFF4D6; --message-error-bg:#FBE9E7;
+  --darkened-bg:#FBF6EA; --selected-bg:#F1E4C8; --selected-row:#FFF4D6;
+  --button-fg:#fff; --button-bg:#8B5E3C; --button-hover-bg:#74492D;
+  --default-button-bg:#2E1F16; --default-button-hover-bg:#4A3425;
+  --close-button-bg:#7A6A52; --close-button-hover-bg:#2E1F16;
+  --delete-button-bg:#B3261E; --delete-button-hover-bg:#8E1D17;
+  --object-tools-fg:#fff; --object-tools-bg:#B8934F; --object-tools-hover-bg:#8B5E3C;
+  color-scheme:light;
+}
+body{font-family:Inter,system-ui,"Segoe UI",sans-serif;background:var(--body-bg)}
+.theme-toggle{display:none!important}
+
+/* шапка */
+#header{background:linear-gradient(135deg,#2E1F16,#4A3425);padding:12px 28px;border-bottom:3px solid var(--accent)}
+#site-name a{font:700 20px "Playfair Display",Georgia,serif;letter-spacing:.06em;color:#fff!important}
+#user-tools{font-size:13px;letter-spacing:.02em}
+#user-tools a{border-bottom:0;color:var(--accent)}
+div.breadcrumbs{padding:12px 28px}
+
+/* контент */
+#content{padding:24px 28px}
+h1{font:700 28px "Playfair Display",Georgia,serif;color:var(--body-fg)}
+.module{border:0;border-radius:16px;overflow:hidden;background:#FBF6EA;box-shadow:0 4px 18px rgba(46,31,22,.08);margin-bottom:24px}
+.module h2,.module caption,.inline-group h2{background:var(--secondary);color:var(--accent);font:600 13px Inter,sans-serif;text-transform:uppercase;letter-spacing:.1em;padding:12px 16px}
+.module h2 a,.module caption a{color:var(--accent)}
+.module h3{color:var(--body-fg)}
+#changelist .paginator,#changelist-filter{border-radius:12px}
+#changelist-filter{background:#FBF6EA;border:1px solid var(--hairline-color);box-shadow:0 4px 18px rgba(46,31,22,.06)}
+#changelist-filter h2{background:var(--secondary);color:var(--accent);border-radius:12px 12px 0 0}
+#changelist-filter li.selected a{color:var(--primary);font-weight:700}
+#changelist table{border-radius:14px;overflow:hidden}
+thead th{background:#EFE2C3;color:var(--body-fg);font-size:12px;text-transform:uppercase;letter-spacing:.06em}
+thead th a{color:var(--body-fg)}
+tr:nth-child(even) td,tr:nth-child(even) th{background:#FBF6EA}
+tr:nth-child(odd) td,tr:nth-child(odd) th{background:#FFFDF7}
+tbody tr:hover td,tbody tr:hover th{background:#F7EBCB!important}
+td,th{padding:12px 10px;border-bottom:1px solid #F0E4C6}
+.paginator{background:transparent}
+.actions{background:#F1E4C8;border-radius:12px;margin:6px 0}
+
+/* кнопки и поля */
+.button,input[type=submit],input[type=button],.submit-row input,a.button{border-radius:999px;font-weight:600;padding:10px 20px;letter-spacing:.02em}
+.submit-row{background:#FBF6EA;border:1px solid var(--hairline-color);border-radius:14px;padding:14px}
+.submit-row a.deletelink{border-radius:999px;padding:10px 18px}
+.object-tools a{border-radius:999px;padding:8px 18px;font-weight:600;text-transform:none;letter-spacing:0}
+input[type=text],input[type=number],input[type=password],input[type=email],input[type=url],input[type=date],input[type=time],textarea,select,.vTextField{border:1px solid var(--hairline-color);border-radius:10px;padding:8px 12px;background:#fff;color:var(--body-fg)}
+input:focus,textarea:focus,select:focus{border-color:var(--accent)!important;outline:0;box-shadow:0 0 0 3px rgba(184,147,79,.25)}
+fieldset.module{background:#FBF6EA}
+.form-row{border-bottom:1px solid #F0E4C6;padding:14px 16px}
+.aligned label{font-weight:600;color:var(--body-fg)}
+.help{color:var(--body-quiet-color)}
+ul.messagelist li{border-radius:12px;margin:0 0 8px;padding:12px 16px 12px 40px}
+.inline-group{border-radius:16px;overflow:hidden;border:0;box-shadow:0 4px 18px rgba(46,31,22,.08)}
+
+/* боковая навигация */
+#nav-sidebar{background:#FBF6EA;border-right:1px solid var(--hairline-color)}
+#nav-sidebar .module th{background:transparent}
+#nav-sidebar .current-model{background:var(--selected-bg)}
+#nav-filter{border-radius:999px}
+.toggle-nav-sidebar{background:#FBF6EA;border-right:1px solid var(--hairline-color)}
+
+/* страница входа */
+body.login{background:radial-gradient(circle at 30% 20%,#4A3425,#2E1F16 70%);display:flex;align-items:center;justify-content:center;min-height:100vh}
+.login #container{border:0;border-radius:24px;overflow:hidden;background:#FBF6EA;box-shadow:0 20px 60px rgba(0,0,0,.4);width:380px;max-width:92vw;padding:0}
+.login #header{background:transparent;border:0;padding:30px 20px 0;justify-content:center}
+.login #site-name{margin:0}
+.login #site-name a{flex-direction:column;color:var(--secondary)!important;font-size:24px}
+.login #site-name img{width:84px!important;height:84px!important;box-shadow:0 6px 20px rgba(0,0,0,.35)}
+.login #content{padding:20px 30px 30px}
+.login .form-row label{display:block;margin-bottom:6px}
+.login .form-row input{width:100%;box-sizing:border-box}
+.login .submit-row{border:0;background:transparent;padding:10px 0 0}
+.login .submit-row input{width:100%;background:var(--secondary)}
+
+select{height:auto;min-height:38px;line-height:1.3;padding:8px 30px 8px 12px}
+.tabular td.original,.tabular th.original{display:none}
+.latest td:first-child,.latest th:first-child{width:70px}
+.latest td:nth-child(4),.latest td:nth-child(5),.latest td:nth-child(6){white-space:nowrap}
+/* дашборд: Django ограничивает главную 600px — снимаем */
+.dashboard #content{width:auto;box-sizing:border-box}
+.dashboard #content-main{min-width:0}
+.latest td,.latest th{white-space:normal}
+.latest thead th{writing-mode:horizontal-tb;text-align:left}
+/* дашборд */
+.kaafi-actions{display:flex;gap:10px;flex-wrap:wrap;margin:0 0 22px}
+.kaafi-actions a{padding:12px 20px;border-radius:999px;font-weight:700;text-decoration:none;font-size:14px}
+.kaafi-actions .a1{background:var(--secondary);color:#fff}
+.kaafi-actions .a2{background:var(--accent);color:var(--secondary)}
+.kaafi-actions .a3{background:#fff;color:var(--secondary);border:1px solid var(--hairline-color)}
+.kaafi-actions a:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(46,31,22,.18)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;margin-bottom:26px}
+.stat{background:#FBF6EA;border-radius:16px;padding:18px;box-shadow:0 4px 18px rgba(46,31,22,.08);border-top:4px solid var(--accent);text-decoration:none;display:block}
+.stat.alert{border-top-color:#E53935}
+.stat span{display:block;font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--body-quiet-color)}
+.stat b{display:block;font:700 32px "Playfair Display",Georgia,serif;color:var(--body-fg);margin-top:4px}
+.stat small{color:var(--body-quiet-color)}
+.latest{margin-bottom:26px}
+.latest table{width:100%}
+.pill-s{display:inline-block;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:700;background:#F1E4C8}
+.pill-s.new{background:#FDE0DE;color:#B3261E}
+.pill-s.in_progress{background:#FFF0C2;color:#8A6200}
+.pill-s.done{background:#DDEFDE;color:#2E7D32}
+.pill-s.cancelled{background:#E8E8E8;color:#666}
+@media (max-width:767px){#header{padding:10px 14px}#content{padding:16px}h1{font-size:22px}}
+
+.kaafi-warn{background:#FFF4D6;border:1px solid #E8D28F;border-radius:14px;padding:12px 16px;margin-bottom:18px;font-size:14px;color:#5a4a1a}
+.kaafi-warn a{font-weight:700;margin-left:6px}

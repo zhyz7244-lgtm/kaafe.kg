@@ -1,0 +1,44 @@
+  <!-- ===== Корзина книг ===== -->
+  <aside class="cart" id="cart" aria-label="Корзина книг">
+    <div class="cart-head">
+      <h2>Корзина книг</h2>
+      <button class="close" id="cart-close" aria-label="Закрыть">✕</button>
+    </div>
+
+    <div class="cart-items" id="cart-items"></div>
+    <p class="cart-empty" id="cart-empty">Пока пусто. Добавьте книги из каталога.</p>
+
+    <form class="cart-foot" id="checkout" hidden novalidate>
+      <div class="seg" role="radiogroup" aria-label="Способ получения">
+        <label><input type="radio" name="delivery_method" value="delivery" checked><span>🚚 Доставка</span></label>
+        <label><input type="radio" name="delivery_method" value="pickup"><span>🏪 Самовывоз</span></label>
+      </div>
+      <input class="fld" name="name" placeholder="Ваше имя" autocomplete="name" maxlength="100">
+      <input class="fld" name="phone" type="tel" placeholder="Номер телефона" autocomplete="tel" maxlength="30">
+      <div id="addr-fields" class="addr">
+        <div class="two">
+          <input class="fld" name="country" placeholder="Страна" value="Кыргызстан" autocomplete="country-name" maxlength="60">
+          <input class="fld" name="city" placeholder="Город" value="Бишкек" autocomplete="address-level2" maxlength="60">
+        </div>
+        <input class="fld" name="address" placeholder="Адрес (улица, дом, кв.)" autocomplete="street-address" maxlength="200">
+      </div>
+      <p class="pickup-note" id="pickup-note" hidden>Заберёте заказ в кофейне: {{ cafe.address }} · {{ cafe.hours }}. Мы позвоним, когда он будет готов.</p>
+      <input class="fld" name="comment" placeholder="Комментарий (необязательно)" maxlength="300">
+      <p class="hint" id="delivery-note">Стоимость и срок доставки менеджер подтвердит по телефону.</p>
+      <div class="total"><span>Итого за книги</span><b id="total">0 сом</b></div>
+      <div class="notice err" id="order-error" hidden></div>
+      <button class="btn big" id="place-order" type="submit">Оформить заказ</button>
+    </form>
+
+    <div class="done" id="done" hidden>
+      <div class="done-icon">✓</div>
+      <h3>Заказ принят!</h3>
+      <p id="done-text"></p>
+      <button class="btn" id="done-close" type="button">Продолжить покупки</button>
+    </div>
+  </aside>
+
+  <button class="cart-fab" id="cart-fab" type="button" hidden>
+    Корзина · <span id="fab-count">0</span> · <b id="fab-total">0 сом</b>
+  </button>
+  <div class="scrim" id="scrim" hidden></div>

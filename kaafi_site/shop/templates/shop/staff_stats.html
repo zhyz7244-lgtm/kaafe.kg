@@ -1,0 +1,164 @@
+{% load static %}<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Статистика — Kaafi</title>
+  <link rel="icon" href="{% static 'shop/favicon.png' %}" type="image/png">
+  <style>
+    :root{--bg:#F6EEDC;--paper:#FBF6EA;--line:#E3D2A5;--ink:#2E1F16;--gold:#B8934F;--brown:#8B5E3C;--book:#5B7DA8}
+    *{box-sizing:border-box;margin:0}
+    body{font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--ink);padding:16px;max-width:1040px;margin:0 auto}
+    h1{font-size:26px;margin-bottom:4px} h2{font-size:16px;margin-bottom:12px}
+    .hint{color:#7A6A52;font-size:13px;margin-bottom:16px}
+    .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;margin-bottom:18px}
+    .box{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:18px}
+    .lbl{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:#7A6A52;font-weight:600;margin-bottom:6px}
+    .big{font-size:26px;font-weight:800;font-variant-numeric:lining-nums}
+    .up{color:#2E7D32;font-weight:700;font-size:15px;margin-left:8px}.down{color:#B3261E;font-weight:700;font-size:15px;margin-left:8px}
+    .sub{font-size:13px;color:#7A6A52;margin-top:4px}
+    .prev{font-size:13px;color:#9A8A6C;margin-top:10px;padding-top:8px;border-top:1px dashed var(--line)}
+    .filter{display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:12px 16px;margin-bottom:16px}
+    .filter b{font-size:15px;margin-right:auto}
+    select{padding:9px 14px;border:1px solid var(--line);border-radius:10px;background:#fff;font:inherit}
+    .chart{display:flex;align-items:flex-end;gap:6px;height:200px}
+    .col{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;gap:4px;min-width:0}
+    .stack{width:100%;display:flex;flex-direction:column;justify-content:flex-end}
+    .seg-b{background:var(--book);border-radius:6px 6px 0 0}.seg-c{background:var(--gold)}
+    .seg-c:only-child{border-radius:6px 6px 0 0}
+    .col small{font-size:11px;color:#7A6A52}.col .v{font-size:10px;color:#7A6A52}
+    .col.sel small{font-weight:800;color:var(--ink)}
+    .legend{display:flex;gap:16px;font-size:13px;color:#7A6A52;margin-top:10px}
+    .legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+    .head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:10px;flex-wrap:wrap}
+    .two{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px;margin-bottom:14px}
+    table{width:100%;border-collapse:collapse;font-size:14px}
+    th{text-align:left;color:#7A6A52;font-weight:600;padding:4px 6px;font-size:13px}
+    td{padding:8px 6px;border-top:1px solid var(--line);vertical-align:middle}
+    td.n,th.n{text-align:right;white-space:nowrap}
+    .bar{height:8px;border-radius:99px;background:#EADFC4;overflow:hidden;min-width:70px}
+    .bar i{display:block;height:100%;background:var(--gold);border-radius:99px}
+    .bar.book i{background:var(--book)}
+    .sec{font-weight:600}
+    .tag{font-size:11px;background:#F1E4C8;color:var(--brown);border-radius:99px;padding:2px 8px;margin-left:6px;white-space:nowrap}
+    .rank{color:#9A8A6C;width:26px}
+    .empty{color:#7A6A52;font-size:14px;padding:6px 0}
+    .scroll{overflow-x:auto}
+    @media(max-width:600px){.col .v{display:none}.hide-m{display:none}.chart{gap:3px}.big{font-size:22px}}
+  </style>
+</head>
+<body>
+{% include "shop/_staffnav.html" with active="stats" %}
+<h1>Статистика</h1>
+<p class="hint">Кофейня (кофе, напитки, мохито, еда) и книги — всё вместе. Отменённые заказы не учитываются.</p>
+
+<div class="cards">
+  <div class="box">
+    <div class="lbl">Сегодня</div>
+    <div class="big">{{ today_revenue }} сом</div>
+    <div class="sub">{{ today_orders }} заказов</div>
+  </div>
+  <div class="box">
+    <div class="lbl">Месяц к месяцу</div>
+    <div class="big">{{ this_month.revenue }} сом{% if month_delta %}<span class="{% if '-' in month_delta %}down{% else %}up{% endif %}">{{ month_delta }}</span>{% endif %}</div>
+    <div class="sub">Этот месяц: {{ this_month.orders }} зак. (кофейня {{ this_month.cafe_orders }}, книги {{ this_month.book_orders }})</div>
+    <div class="prev">Прошлый месяц: {{ last_month.revenue }} сом · {{ last_month.orders }} зак.</div>
+  </div>
+  <div class="box">
+    <div class="lbl">Год к году</div>
+    <div class="big">{{ this_year.revenue }} сом{% if year_delta %}<span class="{% if '-' in year_delta %}down{% else %}up{% endif %}">{{ year_delta }}</span>{% endif %}</div>
+    <div class="sub">{{ cur_year }}: {{ this_year.orders }} зак. (кофейня {{ this_year.cafe_orders }}, книги {{ this_year.book_orders }})</div>
+    <div class="prev">{{ prev_year }}: {{ last_year.revenue }} сом · {{ last_year.orders }} зак.</div>
+  </div>
+</div>
+
+<form class="filter" method="get">
+  <b>Подробно за период: {{ period_label }}</b>
+  <select name="month" onchange="this.form.submit()" aria-label="Месяц">
+    <option value="0" {% if not month %}selected{% endif %}>Весь год</option>
+    {% for n, name in full_months %}<option value="{{ n }}" {% if n == month %}selected{% endif %}>{{ name }}</option>{% endfor %}
+  </select>
+  <select name="year" onchange="this.form.submit()" aria-label="Год">
+    {% for y in year_list %}<option value="{{ y }}" {% if y == year %}selected{% endif %}>{{ y }}</option>{% endfor %}
+  </select>
+</form>
+
+<div class="cards">
+  <div class="box"><div class="lbl">Выручка за период</div><div class="big">{{ period.revenue }} сом</div>
+    <div class="sub">кофейня {{ period.cafe_revenue }} · книги {{ period.book_revenue }}</div></div>
+  <div class="box"><div class="lbl">Заказов</div><div class="big">{{ period.orders }}</div>
+    <div class="sub">кофейня {{ period.cafe_orders }} · книги {{ period.book_orders }}</div></div>
+  <div class="box"><div class="lbl">Средний чек кофейни</div><div class="big">{{ period.avg_check }} сом</div>
+    <div class="sub">на один заказ</div></div>
+  <div class="box"><div class="lbl">Лучший раздел</div>
+    <div class="big" style="font-size:22px">{% if best_section %}{{ best_section.name }}{% else %}—{% endif %}</div>
+    <div class="sub">{% if best_section %}{{ best_section.revenue }} сом · {{ best_section.share }}% выручки{% endif %}</div></div>
+</div>
+
+<div class="box" style="margin-bottom:14px">
+  <h2>Продажи по разделам — {{ period_label }}</h2>
+  {% if sections %}
+  <div class="scroll"><table>
+    <tr><th>Раздел</th><th class="n">Продано, шт</th><th class="n hide-m">Заказов</th><th class="n">Выручка</th><th class="hide-m" style="width:28%">Доля ({{ period.revenue }} сом = 100%)</th></tr>
+    {% for x in sections %}
+    <tr>
+      <td class="sec">{% if x.is_book %}📚 {% endif %}{{ x.name }}</td>
+      <td class="n">{{ x.qty }}</td><td class="n hide-m">{{ x.orders }}</td>
+      <td class="n"><b>{{ x.revenue }} сом</b></td>
+      <td class="hide-m"><div style="display:flex;align-items:center;gap:8px"><div class="bar {% if x.is_book %}book{% endif %}" style="flex:1"><i style="width:{{ x.bar }}%"></i></div><span style="font-size:12px;color:#7A6A52;width:34px">{{ x.share }}%</span></div></td>
+    </tr>
+    {% endfor %}
+  </table></div>
+  {% else %}<p class="empty">За этот период продаж пока нет.</p>{% endif %}
+</div>
+
+<div class="two">
+  <div class="box">
+    <h2>Топ позиций меню — {{ period_label }}</h2>
+    {% if top_menu %}
+    <table>
+      {% for t in top_menu %}<tr><td class="rank">{{ forloop.counter }}</td><td>{{ t.name }}<span class="tag">{{ t.section }}</span></td><td class="n">{{ t.qty }} шт</td><td class="n"><b>{{ t.revenue }} сом</b></td></tr>{% endfor %}
+    </table>
+    {% else %}<p class="empty">Данных пока нет.</p>{% endif %}
+  </div>
+  <div class="box">
+    <h2>Топ книг — {{ period_label }}</h2>
+    {% if top_books %}
+    <table>
+      {% for t in top_books %}<tr><td class="rank">{{ forloop.counter }}</td><td>{{ t.name }}</td><td class="n">{{ t.qty }} шт</td><td class="n"><b>{{ t.revenue }} сом</b></td></tr>{% endfor %}
+    </table>
+    {% else %}<p class="empty">Заказов книг за период нет.</p>{% endif %}
+  </div>
+</div>
+
+<div class="box" style="margin-bottom:14px">
+  <div class="head">
+    <h2 style="margin:0">Выручка по месяцам — {{ year }}</h2>
+  </div>
+  <div class="chart">
+    {% for m in months %}
+    <a class="col {% if m.num == month %}sel{% endif %}" href="?year={{ year }}&month={{ m.num }}" title="{{ m.name }}: {{ m.revenue }} сом (кофейня {{ m.cafe_revenue }}, книги {{ m.book_revenue }}) · {{ m.orders }} зак." style="text-decoration:none;color:inherit">
+      <span class="v">{% if m.revenue %}{{ m.revenue }}{% endif %}</span>
+      <div class="stack" style="height:{{ m.pct }}%">
+        {% if m.book_revenue %}<div class="seg-b" style="flex:{{ m.book_revenue }}"></div>{% endif %}
+        {% if m.cafe_revenue %}<div class="seg-c" style="flex:{{ m.cafe_revenue }}"></div>{% endif %}
+      </div>
+      <small>{{ m.name }}</small>
+    </a>
+    {% endfor %}
+  </div>
+  <div class="legend"><span><i style="background:var(--gold)"></i>Кофейня</span><span><i style="background:var(--book)"></i>Книги</span><span>Нажмите на месяц — увидите подробности</span></div>
+</div>
+
+<div class="box">
+  <h2>По годам</h2>
+  <div class="scroll"><table>
+    <tr><th>Год</th><th class="n">Заказов</th><th class="n">Кофейня</th><th class="n">Книги</th><th class="n">Выручка</th><th class="n">к пред.</th></tr>
+    {% for y in years %}
+    <tr><td>{{ y.year }}</td><td class="n">{{ y.orders }}</td><td class="n">{{ y.cafe_revenue }} сом</td><td class="n">{{ y.book_revenue }} сом</td><td class="n"><b>{{ y.revenue }} сом</b></td>
+      <td class="n">{% if y.delta %}<span class="{% if '-' in y.delta %}down{% else %}up{% endif %}" style="margin:0;font-size:13px">{{ y.delta }}</span>{% else %}—{% endif %}</td></tr>
+    {% endfor %}
+  </table></div>
+</div>
+</body>
+</html>

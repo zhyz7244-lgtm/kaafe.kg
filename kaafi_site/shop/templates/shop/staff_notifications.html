@@ -1,0 +1,147 @@
+{% load static %}<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Уведомления — Kaafi</title>
+  <link rel="icon" href="{% static 'shop/favicon.png' %}" type="image/png">
+  <style>
+    :root{--bg:#F6EEDC;--paper:#FBF6EA;--line:#E3D2A5;--ink:#2E1F16;--gold:#B8934F;--brown:#8B5E3C}
+    *{box-sizing:border-box;margin:0}
+    body{font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--ink);padding:16px;max-width:820px;margin:0 auto}
+    h1{font-size:24px;margin-bottom:4px}
+    .lead{color:#7A6A52;font-size:14px;margin-bottom:18px}
+    .box{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:18px;margin-bottom:16px}
+    .box h2{font-size:18px;display:flex;align-items:center;gap:10px;margin-bottom:4px}
+    .st{font-size:12px;font-weight:700;padding:3px 10px;border-radius:999px}
+    .st.ok{background:#E7F3E8;color:#2E7D32}.st.no{background:#FBE9E7;color:#B3261E}.st.mid{background:#FFF4D6;color:#8a6d00}
+    ol{margin:10px 0 14px 20px;font-size:14px;line-height:1.7;color:#4A3A2C}
+    label{display:block;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#7A6A52;margin:12px 0 4px}
+    input{width:100%;padding:11px 14px;border:1px solid var(--line);border-radius:12px;background:#fff;font:inherit;outline:0}
+    input:focus{border-color:var(--gold)}
+    .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+    button{border:0;border-radius:999px;padding:11px 18px;font:600 14px inherit;background:var(--brown);color:#fff;cursor:pointer}
+    button.alt{background:#fff;color:var(--ink);border:1px solid var(--line)}
+    button:disabled{opacity:.55;cursor:wait}
+    .msg{margin-top:10px;font-size:14px;padding:10px 14px;border-radius:12px}
+    .msg.ok{background:#E7F3E8;color:#2E7D32}.msg.err{background:#FBE9E7;color:#B3261E}
+    .chats{display:flex;flex-direction:column;gap:6px;margin-top:10px}
+    .chats button{text-align:left;background:#fff;color:var(--ink);border:1px solid var(--line);border-radius:12px}
+    .what{font-size:14px;color:#4A3A2C}
+    .what li{margin-bottom:2px}
+    small{color:#7A6A52}
+    .ro{background:#FFF4D6;border-radius:12px;padding:10px 14px;font-size:14px;margin-bottom:14px}
+  </style>
+</head>
+<body>
+{% include "shop/_staffnav.html" with active="notify" %}
+<h1>Уведомления о заказах</h1>
+<p class="lead">Как только гость оформит заказ (со столом), закажет книгу или оставит отзыв — вам придёт сообщение в Telegram и/или WhatsApp. Если ничего не подключать, заказы всё равно видны на странице «Заказы» со звуком.</p>
+
+{% if not is_super %}<div class="ro">Менять настройки может только главный администратор. Вы можете отправить тестовое сообщение.</div>{% endif %}
+
+<section class="box" id="tg">
+  <h2>Telegram
+    {% if tg.token and tg.chat %}<span class="st ok" id="tg-st">подключён</span>
+    {% elif tg.token %}<span class="st mid" id="tg-st">нужен chat id</span>
+    {% else %}<span class="st no" id="tg-st">не подключён</span>{% endif %}
+  </h2>
+  <ol>
+    <li>В Telegram откройте <b>@BotFather</b> → команда <b>/newbot</b> → придумайте имя → скопируйте <b>токен</b> и вставьте ниже.</li>
+    <li>Откройте своего нового бота и нажмите <b>«Старт»</b> (чтобы он мог вам писать).</li>
+    <li>Нажмите <b>«Найти мой chat id»</b> и выберите свой чат. Затем <b>«Сохранить»</b> и <b>«Отправить тест»</b>.</li>
+  </ol>
+  <label for="token">Токен бота {% if tg.token %}<small>(сохранён: {{ tg.token_hint }} — оставьте пустым, чтобы не менять)</small>{% endif %}</label>
+  <input id="token" autocomplete="off" placeholder="123456789:AAH..." {% if not is_super %}disabled{% endif %}>
+  <label for="chat">Chat id <small>(можно несколько через запятую — например, вы и бариста)</small></label>
+  <input id="chat" value="{{ chat_id }}" placeholder="например 123456789" {% if not is_super %}disabled{% endif %}>
+  <div class="chats" id="chats"></div>
+  <div class="row">
+    <button class="alt" type="button" id="find" {% if not is_super %}disabled{% endif %}>Найти мой chat id</button>
+    <button type="button" id="save-tg" {% if not is_super %}disabled{% endif %}>Сохранить</button>
+    <button class="alt" type="button" id="test-tg">Отправить тест</button>
+  </div>
+  <div id="tg-msg"></div>
+</section>
+
+<section class="box" id="wa">
+  <h2>WhatsApp
+    {% if wa.phone and wa.key %}<span class="st ok" id="wa-st">подключён</span>{% else %}<span class="st no" id="wa-st">не подключён</span>{% endif %}
+  </h2>
+  <p class="what">Работает через бесплатный шлюз CallMeBot (сообщения приходят вам самому).</p>
+  <ol>
+    <li>Сохраните в телефоне контакт <b>+34 644 99 26 98</b> и отправьте ему в WhatsApp сообщение: <b>I allow callmebot to send me messages</b>.</li>
+    <li>В ответ придёт <b>ключ (apikey)</b>. Впишите ниже свой номер (цифрами, с кодом страны) и ключ.</li>
+  </ol>
+  <label for="wa-phone">Ваш номер</label>
+  <input id="wa-phone" value="{{ wa_phone }}" placeholder="996555123456" inputmode="numeric" {% if not is_super %}disabled{% endif %}>
+  <label for="wa-key">Ключ CallMeBot</label>
+  <input id="wa-key" autocomplete="off" placeholder="{% if wa.key %}сохранён — оставьте пустым, чтобы не менять{% else %}например 1234567{% endif %}" {% if not is_super %}disabled{% endif %}>
+  <div class="row">
+    <button type="button" id="save-wa" {% if not is_super %}disabled{% endif %}>Сохранить</button>
+    <button class="alt" type="button" id="test-wa">Отправить тест</button>
+  </div>
+  <div id="wa-msg"></div>
+</section>
+
+<section class="box">
+  <h2>О чём приходят сообщения</h2>
+  <ul class="what" style="margin:8px 0 0 20px">
+    <li>🔔 Новый заказ — стол, состав, сумма, комментарий и имя клиента (если он зарегистрирован)</li>
+    <li>📚 Новый заказ книги — книга, имя, телефон, адрес</li>
+    <li>⭐ Новый отзыв — ждёт вашего одобрения в админке</li>
+  </ul>
+</section>
+
+<script>
+(function(){
+  const csrf = "{{ csrf_token }}";
+  const $ = (s) => document.querySelector(s);
+  async function post(url, data){
+    const r = await fetch(url, {method:"POST", headers:{"X-CSRFToken":csrf, "Content-Type":"application/x-www-form-urlencoded"}, body:new URLSearchParams(data||{})});
+    let d = {}; try{ d = await r.json(); }catch(e){}
+    return {ok:r.ok, d};
+  }
+  function say(box, ok, text){ const m = document.createElement("div"); m.className = "msg " + (ok ? "ok" : "err"); m.textContent = text; box.textContent = ""; box.append(m); }
+  async function busy(btn, fn){ btn.disabled = true; try{ await fn(); } finally { btn.disabled = false; } }
+  const setSt = (id, cls, text) => { const e = $(id); e.className = "st " + cls; e.textContent = text; };
+
+  $("#find").onclick = (e) => busy(e.target, async () => {
+    $("#chats").textContent = "";
+    const t = $("#token").value.trim();
+    if (t) { const s = await post("{% url 'staff_notifications_save' %}", {token: t}); if (!s.ok) return say($("#tg-msg"), false, s.d.error || "Не удалось сохранить токен"); $("#token").value = ""; }
+    const {ok, d} = await post("/staff/notifications/find-chat/");
+    if (!ok) return say($("#tg-msg"), false, d.error || "Ошибка");
+    say($("#tg-msg"), true, "Выберите свой чат:");
+    d.chats.forEach((c) => { const b = document.createElement("button"); b.type = "button"; b.textContent = c.name + " — " + c.id;
+      b.onclick = () => { $("#chat").value = c.id; $("#chats").textContent = ""; say($("#tg-msg"), true, "Chat id подставлен — нажмите «Сохранить»."); };
+      $("#chats").append(b); });
+  });
+
+  $("#save-tg").onclick = (e) => busy(e.target, async () => {
+    const {ok, d} = await post("{% url 'staff_notifications_save' %}", {token: $("#token").value, chat_id: $("#chat").value});
+    if (!ok) return say($("#tg-msg"), false, d.error || "Ошибка");
+    $("#token").value = "";
+    say($("#tg-msg"), true, "Сохранено. Теперь нажмите «Отправить тест».");
+    setSt("#tg-st", $("#chat").value.trim() ? "ok" : "mid", $("#chat").value.trim() ? "подключён" : "нужен chat id");
+  });
+  $("#test-tg").onclick = (e) => busy(e.target, async () => {
+    const {ok, d} = await post("/staff/notifications/test-telegram/");
+    say($("#tg-msg"), ok, d.message || d.error || "Ошибка");
+  });
+
+  $("#save-wa").onclick = (e) => busy(e.target, async () => {
+    const {ok, d} = await post("{% url 'staff_notifications_save' %}", {wa_phone: $("#wa-phone").value, wa_key: $("#wa-key").value});
+    if (!ok) return say($("#wa-msg"), false, d.error || "Ошибка");
+    $("#wa-key").value = "";
+    say($("#wa-msg"), true, "Сохранено. Теперь нажмите «Отправить тест».");
+  });
+  $("#test-wa").onclick = (e) => busy(e.target, async () => {
+    const {ok, d} = await post("/staff/notifications/test-whatsapp/");
+    say($("#wa-msg"), ok, d.message || d.error || "Ошибка");
+    if (ok) setSt("#wa-st", "ok", "подключён");
+  });
+})();
+</script>
+</body>
+</html>

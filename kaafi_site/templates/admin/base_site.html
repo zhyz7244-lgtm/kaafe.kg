@@ -1,0 +1,13 @@
+{% extends "admin/base.html" %}
+{% load static %}
+{% block title %}{% if subtitle %}{{ subtitle }} | {% endif %}{{ title }} | Kaafi{% endblock %}
+{% block extrastyle %}{{ block.super }}
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{% static 'shop/admin.css' %}">
+<link rel="icon" href="{% static 'shop/favicon.png' %}" type="image/png">
+{% endblock %}
+{% block branding %}
+<h1 id="site-name"><a href="{% url 'admin:index' %}" style="display:flex;align-items:center;gap:10px">
+  <img src="{% static 'shop/logo.png' %}" alt="" style="width:36px;height:36px;border-radius:50%">KAAFI</a></h1>
+{% endblock %}
+{% block nav-global %}{% endblock %}

@@ -1,0 +1,34 @@
+{# Иллюстрация-заглушка. kind: hot|iced|food, tone: dark|milk #}
+{% if kind == "food" %}
+<svg class="art" viewBox="0 0 200 160" aria-hidden="true">
+  <ellipse cx="100" cy="132" rx="78" ry="12" fill="#fff" stroke="#E3D2A5" stroke-width="2"/>
+  <ellipse cx="100" cy="128" rx="54" ry="7" fill="#F4E9CF"/>
+  <path d="M46 112c-6-34 14-62 54-62s60 28 54 62c-8 8-26 10-54 10s-46-2-54-10z" fill="#E2A957" stroke="#B8934F" stroke-width="2.5" stroke-linejoin="round"/>
+  <path d="M70 62c-4 14-6 30-6 52M100 52v66M130 62c4 14 6 30 6 52" stroke="#C98A3B" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <path d="M78 66c8-8 36-8 44 0" stroke="rgba(255,255,255,.55)" stroke-width="4" fill="none" stroke-linecap="round"/>
+</svg>
+{% elif kind == "iced" %}
+<svg class="art tone-{{ tone }}" viewBox="0 0 200 160" aria-hidden="true">
+  <ellipse cx="100" cy="148" rx="52" ry="7" fill="rgba(46,31,22,.14)"/>
+  <path d="M138 14l-14 70" stroke="#B8934F" stroke-width="5" stroke-linecap="round"/>
+  <path d="M64 28h72l-8 112a8 8 0 0 1-8 7H80a8 8 0 0 1-8-7z" fill="rgba(255,255,255,.55)" stroke="#B8934F" stroke-width="2.5" stroke-linejoin="round"/>
+  <path d="M68.5 64h63l-5.2 76a8 8 0 0 1-8 7H81.7a8 8 0 0 1-8-7z" class="liq-top"/>
+  <path d="M71 100h58l-2.8 40a8 8 0 0 1-8 7H81.8a8 8 0 0 1-8-7z" class="liq-bot"/>
+  <rect x="78" y="40" width="22" height="22" rx="4" fill="rgba(255,255,255,.75)" stroke="#E3D2A5" transform="rotate(-10 89 51)"/>
+  <rect x="100" y="48" width="22" height="22" rx="4" fill="rgba(255,255,255,.75)" stroke="#E3D2A5" transform="rotate(12 111 59)"/>
+  <rect x="86" y="68" width="20" height="20" rx="4" fill="rgba(255,255,255,.7)" stroke="#E3D2A5" transform="rotate(6 96 78)"/>
+  <path d="M78 30h44" stroke="rgba(255,255,255,.9)" stroke-width="3" stroke-linecap="round"/>
+</svg>
+{% else %}
+<svg class="art tone-{{ tone }}" viewBox="0 0 200 160" aria-hidden="true">
+  <ellipse cx="100" cy="140" rx="70" ry="10" fill="#fff" stroke="#E3D2A5" stroke-width="2"/>
+  <ellipse cx="100" cy="136" rx="46" ry="6" fill="#F4E9CF"/>
+  <path d="M146 78c24-4 24 30-2 32" fill="none" stroke="#FBF6EA" stroke-width="9" stroke-linecap="round"/>
+  <path d="M146 78c24-4 24 30-2 32" fill="none" stroke="#B8934F" stroke-width="2" stroke-linecap="round"/>
+  <path d="M52 70h96v26a40 36 0 0 1-40 36H92a40 36 0 0 1-40-36z" fill="#FBF6EA" stroke="#B8934F" stroke-width="2.5" stroke-linejoin="round"/>
+  <ellipse cx="100" cy="70" rx="48" ry="9" fill="#fff" stroke="#B8934F" stroke-width="2.5"/>
+  <ellipse cx="100" cy="71" rx="41" ry="6.5" class="liq-top"/>
+  <path d="M86 70c6-3 14-3 20 0" stroke="rgba(255,255,255,.7)" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <path class="steam" d="M82 52c-6-8 6-12 0-22M102 50c-6-9 6-14 0-26M122 52c-6-8 6-12 0-22" fill="none" stroke="#B8934F" stroke-width="3" stroke-linecap="round" opacity=".55"/>
+</svg>
+{% endif %}

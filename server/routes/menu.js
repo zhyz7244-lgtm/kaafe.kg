@@ -1,0 +1,9 @@
+import { Router } from 'express';
+import { db } from '../db.js';
+
+export const menuRouter = Router();
+
+menuRouter.get('/', (_req, res) => {
+  const items = db.prepare('SELECT * FROM menu_items ORDER BY sort_order ASC').all();
+  res.json(items);
+});

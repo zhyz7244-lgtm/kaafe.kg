@@ -1,0 +1,41 @@
+{% load static %}<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>QR-коды столов — Kaafi</title>
+  <style>
+    *{box-sizing:border-box;margin:0}
+    body{font-family:Inter,system-ui,sans-serif;background:#eee;padding:20px}
+    .warn{background:#FFF0C2;border:1px solid #E0B84A;color:#5A4200;padding:12px 16px;border-radius:12px;margin-bottom:14px;font-size:14px}
+    @media print{.warn{display:none}}
+    .tools{margin-bottom:16px;display:flex;gap:10px;align-items:center}
+    .tools button{padding:10px 18px;border:0;border-radius:999px;background:#2E1F16;color:#fff;font-weight:600;cursor:pointer}
+    .sheet{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+    .card{background:#FBF6EA;border:2px solid #B8934F;border-radius:20px;padding:24px;text-align:center;break-inside:avoid}
+    .brand{font:700 26px Georgia,serif;letter-spacing:.1em;color:#2E1F16}
+    .brand small{display:block;font:600 10px sans-serif;letter-spacing:.25em;color:#B8934F;text-transform:uppercase}
+    .num{font-size:54px;font-weight:800;margin:10px 0 0;color:#2E1F16}
+    img{width:230px;height:230px;margin:6px auto}
+    p{font-size:15px;color:#2E1F16;font-weight:600}
+    .url{font-size:10px;color:#999;font-weight:400;word-break:break-all;margin-top:8px}
+    @media print{body{background:#fff;padding:0}.tools{display:none}.sheet{grid-template-columns:repeat(2,1fr)}}
+  </style>
+</head>
+<body>
+  {% if is_local %}<div class="warn">⚠ Сейчас в QR-кодах локальный адрес ({{ site_url }}) — телефоны гостей по нему сайт не откроют. Перед печатью укажите настоящий адрес сайта в файле <b>.env</b> (SITE_URL=https://ваш-домен) и перезапустите сервер.</div>{% endif %}
+  <div class="tools"><button onclick="print()">🖨 Печать</button><span>Распечатайте и поставьте на каждый стол.</span></div>
+  <div class="sheet">
+    {% for t, url in tables %}
+    <div class="card">
+      <img src="{% static 'shop/logo.png' %}" alt="" style="width:70px;height:70px;border-radius:50%;margin:0 auto 6px">
+      <div class="brand">KAAFI<small>Books · Coffee</small></div>
+      <div class="num">Стол {{ t.number }}</div>
+      <img src="{% url 'staff_qr_image' t.pk %}" alt="QR стола {{ t.number }}">
+      <p>Наведите камеру и закажите кофе</p>
+      <div class="url">{{ url }}</div>
+    </div>
+    {% empty %}<p>Нет активных столов.</p>{% endfor %}
+  </div>
+</body>
+</html>

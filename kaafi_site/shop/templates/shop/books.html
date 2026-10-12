@@ -1,0 +1,79 @@
+{% load static %}<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% if cat %}{{ cat.name }} — {% endif %}Книги — KAAFI</title>
+  <meta name="description" content="Книги в Kaafi по хорошим ценам: выберите в каталоге и закажите онлайн с доставкой или заберите в кофейне.">
+  <link rel="icon" href="{% static 'shop/favicon.png' %}" type="image/png">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'shop/style.css' %}">
+</head>
+<body>
+<div class="app">
+  {% include "shop/_sidebar.html" with active="books" %}
+
+  <main class="main" id="top">
+    <div class="topbar">
+      <button class="burger" id="burger" aria-label="Меню навигации">☰</button>
+      <form class="search" method="get" action="{% url 'books' %}" role="search">
+        <svg class="ico" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+        <input type="search" name="q" value="{{ q }}" placeholder="Название, автор или код книги" autocomplete="off">
+        {% if cat %}<input type="hidden" name="cat" value="{{ cat.pk }}">{% endif %}
+        <input type="hidden" name="sort" value="{{ sort }}">
+      </form>
+    </div>
+
+    <h1 class="title">Книги</h1>
+    <p class="subtitle">{{ total_books }} {% if total_books == 1 %}книга{% else %}книг{% endif %} по хорошим ценам · доставим или заберите в кофейне</p>
+
+    {% if book_categories %}
+    <div class="pills-wrap books-pills" id="pills-wrap">
+      <div class="pills">
+        <a class="pill {% if not cat %}active{% endif %}" href="?{% if q %}q={{ q|urlencode }}&{% endif %}sort={{ sort }}">Все</a>
+        {% for c in book_categories %}
+        <a class="pill {% if cat and cat.pk == c.pk %}active{% endif %}" href="?cat={{ c.pk }}{% if q %}&q={{ q|urlencode }}{% endif %}&sort={{ sort }}">{{ c.name }} <small>{{ c.n }}</small></a>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="sortbar">
+      <span class="found">
+        {% if q or cat %}Найдено: <b>{{ page.paginator.count }}</b>{% if q %} по запросу «{{ q }}»{% endif %}{% if cat %} в разделе «{{ cat.name }}»{% endif %}
+        {% if q or cat %}<a class="reset" href="{% url 'books' %}">Сбросить</a>{% endif %}{% endif %}
+      </span>
+      <form method="get" class="sortform">
+        {% if q %}<input type="hidden" name="q" value="{{ q }}">{% endif %}
+        {% if cat %}<input type="hidden" name="cat" value="{{ cat.pk }}">{% endif %}
+        <label>Сортировка
+          <select name="sort" onchange="this.form.submit()">
+            {% for key, label in sorts %}<option value="{{ key }}" {% if key == sort %}selected{% endif %}>{{ label }}</option>{% endfor %}
+          </select>
+        </label>
+      </form>
+    </div>
+
+    {% if page.object_list %}
+    <div class="grid books-grid">
+      {% for b in page.object_list %}{% include "shop/_book_card.html" with with_add=True %}{% endfor %}
+    </div>
+
+    {% if page.paginator.num_pages > 1 %}
+    <nav class="pagination" aria-label="Страницы">
+      {% if page.has_previous %}<a href="?{% if querystring %}{{ querystring }}&{% endif %}page={{ page.previous_page_number }}">← Назад</a>{% endif %}
+      <span>Страница {{ page.number }} из {{ page.paginator.num_pages }}</span>
+      {% if page.has_next %}<a href="?{% if querystring %}{{ querystring }}&{% endif %}page={{ page.next_page_number }}">Дальше →</a>{% endif %}
+    </nav>
+    {% endif %}
+    {% else %}
+    <p class="empty">{% if q or cat %}Ничего не найдено — попробуйте другой запрос или <a href="{% url 'books' %}">покажите все книги</a>.{% else %}Каталог книг скоро появится.{% endif %}</p>
+    {% endif %}
+  </main>
+
+  {% include "shop/_book_cart.html" %}
+</div>
+<script>window.CUSTOMER = {% if customer %}{name: "{{ customer.name|escapejs }}", phone: "{{ customer.phone|escapejs }}"}{% else %}null{% endif %}; window.BOOK_ORDER_URL = "{% url 'book_order_create' %}";</script>
+<script src="{% static 'shop/books.js' %}"></script>
+</body>
+</html>

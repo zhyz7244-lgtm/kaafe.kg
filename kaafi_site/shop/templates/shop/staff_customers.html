@@ -1,0 +1,223 @@
+{% load static %}<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Клиенты и бонусы — Kaafi</title>
+  <link rel="icon" href="{% static 'shop/favicon.png' %}" type="image/png">
+  <style>
+    :root{--bg:#F6EEDC;--paper:#FBF6EA;--line:#E3D2A5;--ink:#2E1F16;--gold:#B8934F;--brown:#8B5E3C}
+    *{box-sizing:border-box;margin:0}
+    body{font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--ink);padding:16px;max-width:780px;margin:0 auto}
+    h1{font-size:24px;margin-bottom:4px}
+    p.hint{color:#7A6A52;font-size:14px;margin-bottom:16px}
+    button,a.b{border:0;border-radius:999px;padding:11px 18px;font:600 14px inherit;background:var(--brown);color:#fff;cursor:pointer;text-decoration:none}
+    button.alt,a.b.alt{background:#fff;color:var(--ink);border:1px solid var(--line)}
+    button.no{background:#fff;color:#B3261E;border:1px solid #E8B4AE}
+    button.big{padding:14px 22px;font-size:15px}
+    button:disabled{opacity:.55}
+    .bar{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+    input{padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:#fff;font:inherit;outline:0;min-width:0}
+    input:focus{border-color:var(--gold)}
+    .bar input{flex:1;min-width:200px}
+    .res{display:flex;flex-direction:column;gap:12px}
+    .c{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:12px}
+    .c.hl{border:2px solid var(--gold);box-shadow:0 0 0 4px rgba(184,147,79,.2)}
+    .top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+    .name{font-size:20px;font-weight:700}
+    .bal{font-size:36px;font-weight:800;color:var(--gold);line-height:1;text-align:right;font-variant-numeric:lining-nums}
+    .bal small{display:block;font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#7A6A52}
+    .meta{font-size:13px;color:#7A6A52}
+    .quick{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:8px}
+    .quick label{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#7A6A52}
+    .quick .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+    .quick input{width:190px;font-size:18px;font-weight:600}
+    .quick .prev{font-size:14px;color:#2E7D32;font-weight:600;min-height:20px}
+    details.more summary{cursor:pointer;font-size:13px;font-weight:600;color:#7A6A52}
+    .adj{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+    .adj input[type=number]{width:110px}.adj input[type=text]{flex:1;min-width:140px}
+    ul{list-style:none;padding:0;font-size:13px;display:flex;flex-direction:column;gap:4px}
+    li{display:flex;justify-content:space-between;gap:10px}
+    .p{color:#2E7D32;font-weight:700}.m{color:#B3261E;font-weight:700}
+    .err{color:#B3261E;font-size:14px;min-height:20px;margin-bottom:6px}
+    .ok{color:#2E7D32;font-size:14px;font-weight:600}
+    .newbox{background:var(--paper);border:1px dashed var(--gold);border-radius:16px;padding:14px;margin-bottom:14px}
+    .newbox summary{cursor:pointer;font-weight:700}
+    .newbox form{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+    .newbox form .full{grid-column:1/-1}
+    @media(max-width:560px){.newbox form{grid-template-columns:1fr}}
+    .temp{background:#FFF4D6;border-radius:12px;padding:10px 14px;font-size:14px}
+    .temp b{font-size:18px;letter-spacing:.06em}
+    #scan{position:fixed;inset:0;background:rgba(0,0,0,.6);display:grid;place-items:center;padding:16px;z-index:50}
+    #scan[hidden]{display:none}
+    #scan div{background:var(--paper);border-radius:16px;padding:16px;width:min(380px,100%)}
+    video{width:100%;aspect-ratio:1;object-fit:cover;background:#000;border-radius:10px;margin:10px 0}
+    .qrimg{width:120px;height:120px;border-radius:10px;background:#fff;padding:4px}
+  </style>
+</head>
+<body>
+{% include "shop/_staffnav.html" with active="customers" %}
+<h1>Клиенты и бонусы</h1>
+<p class="hint">Бонусы — только за кофе (1% с чека). Отсканируйте QR гостя — карточка откроется сразу: введите сумму чека и нажмите «Начислить». Бонусы с заказов через сайт начисляются сами, когда вы нажимаете «Выдан».</p>
+
+<form class="bar" id="f">
+  <input id="q" placeholder="Телефон, имя или код (KAAFI-123456)" autocomplete="off" autofocus>
+  <button type="submit">Найти</button>
+  <button type="button" class="alt" id="scanbtn">📷 Сканировать QR</button>
+</form>
+<div class="err" id="err"></div>
+
+<details class="newbox" id="newbox">
+  <summary>➕ Зарегистрировать нового гостя</summary>
+  <form id="regf">
+    <input name="name" placeholder="Имя гостя" required maxlength="60">
+    <input name="phone" type="tel" placeholder="Телефон" required maxlength="30">
+    <input name="password" class="full" placeholder="Пароль (необязательно — иначе дадим временный)" maxlength="128" autocomplete="off">
+    <button class="full" type="submit">Зарегистрировать</button>
+  </form>
+  <div class="err" id="regerr" style="margin-top:8px"></div>
+</details>
+
+<div class="res" id="res"></div>
+
+<div id="scan" hidden><div>
+  <b>Наведите камеру на QR гостя</b>
+  <video id="vid" muted playsinline></video>
+  <p class="err" id="scanerr"></p>
+  <button class="alt" type="button" id="scanclose">Закрыть</button>
+</div></div>
+
+<script>
+(function(){
+  const LOOKUP = "{% url 'staff_customers_lookup' %}";
+  const REGISTER = "{% url 'staff_customer_register' %}";
+  const BONUS = (id) => "/staff/customers/" + id + "/bonus/";
+  const csrf = "{{ csrf_token }}";
+  const $ = (s) => document.querySelector(s);
+  const res = $("#res"), err = $("#err");
+
+  const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+  const post = async (url, data) => {
+    const r = await fetch(url, { method: "POST", headers: { "X-CSRFToken": csrf }, body: new URLSearchParams(data) });
+    return { ok: r.ok, d: await r.json().catch(() => ({})) };
+  };
+
+  function card(c, opts) {
+    opts = opts || {};
+    const box = el("div", "c" + (opts.highlight ? " hl" : ""));
+    const top = el("div", "top");
+    const who = el("div");
+    who.append(el("div", "name", c.name), el("div", "meta", "+" + c.phone + " · " + c.code));
+    const bal = el("div", "bal", String(c.balance)); bal.append(el("small", null, "бонусов"));
+    top.append(who, bal);
+    box.append(top);
+
+    if (opts.password) {
+      const t = el("div", "temp");
+      t.append(document.createTextNode("Гость зарегистрирован. Временный пароль для входа на сайт: "), el("b", null, opts.password),
+        document.createTextNode(" — он сможет сменить его в своём профиле."));
+      box.append(t);
+    }
+
+    // быстрое начисление 1% с чека за кофе
+    const q = el("div", "quick");
+    q.append(el("label", null, "Сумма чека за кофе, сом"));
+    const row = el("div", "row");
+    const inp = el("input"); inp.type = "number"; inp.min = 1; inp.inputMode = "numeric"; inp.placeholder = "Сумма";
+    const go = el("button", "big", "Начислить 1%");
+    const prev = el("span", "prev");
+    inp.addEventListener("input", () => { const v = parseInt(inp.value, 10); prev.textContent = v > 0 ? "= " + Math.floor(v / 100) + " бонусов" : ""; });
+    row.append(inp, go, prev);
+    q.append(row);
+    box.append(q);
+    go.onclick = async () => {
+      err.textContent = "";
+      const v = parseInt(inp.value, 10);
+      if (!v || v <= 0) { err.textContent = "Введите сумму чека."; inp.focus(); return; }
+      go.disabled = true;
+      const { ok, d } = await post(BONUS(c.id), { check: v });
+      go.disabled = false;
+      if (!ok) { err.textContent = d.error || "Ошибка"; return; }
+      box.replaceWith(card(d.customer, { highlight: true }));
+    };
+
+    // ручная корректировка и списание
+    const more = el("details", "more");
+    more.append(el("summary", null, "Списать бонусы / начислить вручную"));
+    const adj = el("div", "adj");
+    const amt = el("input"); amt.type = "number"; amt.min = 1; amt.placeholder = "Бонусов";
+    const note = el("input"); note.type = "text"; note.placeholder = "Комментарий (необязательно)";
+    const give = el("button", "alt", "Начислить"), take = el("button", "no", "Списать");
+    give.type = take.type = "button";
+    adj.append(amt, note, give, take); more.append(adj); box.append(more);
+    async function send(sign) {
+      err.textContent = "";
+      const n = parseInt(amt.value, 10);
+      if (!n || n <= 0) { err.textContent = "Введите количество бонусов (целое число больше нуля)."; return; }
+      const { ok, d } = await post(BONUS(c.id), { amount: sign * n, note: note.value });
+      if (!ok) { err.textContent = d.error || "Ошибка"; return; }
+      box.replaceWith(card(d.customer, { highlight: true }));
+    }
+    give.onclick = () => send(1); take.onclick = () => send(-1);
+
+    const hist = el("ul");
+    (c.history.length ? c.history : [{ note: "Операций пока нет.", amount: 0, date: "" }]).forEach((h) => {
+      const li = el("li");
+      li.append(el("span", null, (h.date ? h.date + " · " : "") + h.note));
+      if (h.amount) li.append(el("span", h.amount > 0 ? "p" : "m", (h.amount > 0 ? "+" : "") + h.amount));
+      hist.append(li);
+    });
+    box.append(hist);
+    return box;
+  }
+
+  async function search(q, auto) {
+    err.textContent = ""; res.textContent = "";
+    if (!q.trim()) return;
+    const r = await fetch(LOOKUP + "?q=" + encodeURIComponent(q));
+    const d = await r.json();
+    if (!d.results.length) { err.textContent = "Гость не найден. Можно зарегистрировать его кнопкой ниже."; if (!auto) $("#newbox").open = true; return; }
+    d.results.forEach((c) => res.append(card(c, { highlight: d.results.length === 1 })));
+    if (d.results.length === 1) { const i = res.querySelector(".quick input"); if (i) i.focus(); }
+  }
+  $("#f").addEventListener("submit", (e) => { e.preventDefault(); search($("#q").value); });
+
+  // регистрация на кассе
+  $("#regf").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    $("#regerr").textContent = "";
+    const fd = new FormData(e.target);
+    const { ok, d } = await post(REGISTER, Object.fromEntries(fd.entries()));
+    if (!ok) { $("#regerr").textContent = d.error || "Ошибка"; return; }
+    e.target.reset(); $("#newbox").open = false;
+    res.textContent = ""; err.textContent = "";
+    res.append(card(d.customer, { highlight: true, password: d.customer.password }));
+  });
+
+  // ---- сканер QR (Chrome/Edge/Android; в других браузерах — камерой телефона или вручную) ----
+  const extract = (raw) => { const m = /(?:code=|KAAFI-)(\d{6})/i.exec(raw); return m ? "KAAFI-" + m[1] : raw; };
+  let stream = null, stopped = true;
+  function stop() { stopped = true; if (stream) stream.getTracks().forEach((t) => t.stop()); stream = null; $("#scan").hidden = true; }
+  $("#scanclose").onclick = stop;
+  $("#scanbtn").onclick = async () => {
+    const Det = window.BarcodeDetector;
+    $("#scan").hidden = false; $("#scanerr").textContent = "";
+    if (!Det) { $("#scanerr").textContent = "Этот браузер не умеет сканировать QR. Откройте камеру телефона и наведите на QR гостя — карточка откроется сама."; return; }
+    try { stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } }); }
+    catch (e) { $("#scanerr").textContent = "Нет доступа к камере (нужен https или localhost и разрешение)."; return; }
+    const v = $("#vid"); v.srcObject = stream; await v.play(); stopped = false;
+    const det = new Det({ formats: ["qr_code"] });
+    (async function loop() {
+      if (stopped) return;
+      try { const f = await det.detect(v); if (f.length) { const code = extract(f[0].rawValue); stop(); $("#q").value = code; search(code); return; } } catch (e) {}
+      setTimeout(loop, 250);
+    })();
+  };
+
+  // QR открыт обычной камерой телефона → /staff/customers/?code=123456 → сразу карточка гостя
+  const p = new URLSearchParams(location.search).get("code");
+  if (p) { $("#q").value = "KAAFI-" + p; search("KAAFI-" + p, true); history.replaceState(null, "", location.pathname); }
+})();
+</script>
+</body>
+</html>

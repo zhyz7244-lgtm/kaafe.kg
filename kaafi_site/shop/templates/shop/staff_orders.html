@@ -1,0 +1,165 @@
+{% load static %}<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Заказы — Kaafi</title>
+  <link rel="icon" href="{% static 'shop/favicon.png' %}" type="image/png">
+  <style>
+    :root{--bg:#F6EEDC;--paper:#FBF6EA;--line:#E3D2A5;--ink:#2E1F16;--gold:#B8934F;--brown:#8B5E3C}
+    *{box-sizing:border-box;margin:0}
+    body{font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--ink);padding:16px;max-width:1200px;margin:0 auto}
+    .bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-bottom:6px}
+    h1{font-size:24px}
+    button,a.b{border:0;border-radius:999px;padding:11px 18px;font:600 14px inherit;background:var(--brown);color:#fff;cursor:pointer;text-decoration:none}
+    button.alt,a.b.alt{background:#fff;color:var(--ink);border:1px solid var(--line)}
+    button.ok{background:#2E7D32} button.no{background:#fff;color:#B3261E;border:1px solid #E8B4AE}
+    button.snd-on{background:#2E7D32;color:#fff}
+    h2{font-size:14px;text-transform:uppercase;letter-spacing:.08em;color:#7A6A52;margin:24px 0 10px;display:flex;align-items:center;gap:8px}
+    h2 .n{background:var(--ink);color:#fff;border-radius:999px;font-size:12px;padding:2px 9px;letter-spacing:0}
+    .list{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:14px}
+    .o{background:var(--paper);border:2px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:9px}
+    .o.new{border-color:#E53935;animation:pulse 1.2s infinite}
+    .o.in_progress{border-color:var(--gold)}
+    @keyframes pulse{50%{box-shadow:0 0 0 6px rgba(229,57,53,.25)}}
+    .top{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+    .tbl{font-size:30px;font-weight:800;line-height:1}
+    .meta{font-size:13px;color:#7A6A52}
+    ul{list-style:none;padding:0;display:flex;flex-direction:column;gap:3px}
+    li{display:flex;justify-content:space-between;gap:10px}
+    .c{background:#FFF4D6;padding:8px 10px;border-radius:10px;font-size:14px}
+    .who{background:#EAF3EA;padding:8px 10px;border-radius:10px;font-size:13px}
+    .tot{font-weight:700;display:flex;justify-content:space-between}
+    .act{display:flex;gap:8px;flex-wrap:wrap;margin-top:2px}
+    .act button{flex:1;min-width:110px;padding:12px 10px}
+    .empty{color:#7A6A52;padding:6px 0}
+    .recent .o{opacity:.7;border-width:1px}
+    .book{border-color:#8B5E3C}
+    .book .ttl{font-weight:700;font-size:17px}
+    .book a{color:var(--brown);font-weight:600}
+    .hint{background:#FFF4D6;border-radius:12px;padding:10px 14px;font-size:14px;margin:10px 0}
+  </style>
+</head>
+<body>
+{% include "shop/_staffnav.html" with active="orders" %}
+
+<div class="bar">
+  <h1>Заказы</h1>
+  <button id="snd" class="alt" type="button">🔔 Включить звук</button>
+</div>
+<div class="hint" id="snd-hint">Нажмите «Включить звук» один раз — и держите эту страницу открытой на планшете или телефоне: новые заказы появятся сами и «прозвенят».</div>
+
+<h2>Активные заказы <span class="n" id="n-active">0</span></h2>
+<div class="list" id="active"></div>
+<p class="empty" id="no-active">Новых заказов нет.</p>
+
+<h2>Заказы книг <span class="n" id="n-books">0</span></h2>
+<div class="list" id="books"></div>
+<p class="empty" id="no-books">Новых заказов книг нет.</p>
+
+<h2>Недавно закрытые</h2>
+<div class="list recent" id="recent"></div>
+
+<script>
+(function(){
+  const FEED = "{% url 'staff_orders_feed' %}";
+  const STATUS = (id) => "/staff/orders/" + id + "/status/";
+  const BOOK_STATUS = (id) => "/staff/books/" + id + "/status/";
+  const csrf = "{{ csrf_token }}";
+  const $ = (s) => document.querySelector(s);
+  let soundOn = false, lastOrder = null, lastBook = null, ctx;
+  const BASE_TITLE = "Заказы — Kaafi";
+
+  function beep(){
+    if(!soundOn) return;
+    try{
+      ctx = ctx || new (window.AudioContext||window.webkitAudioContext)();
+      [0, .25, .5].forEach((t)=>{
+        const o = ctx.createOscillator(), g = ctx.createGain();
+        o.frequency.value = 880; o.connect(g); g.connect(ctx.destination);
+        g.gain.setValueAtTime(.25, ctx.currentTime+t); g.gain.exponentialRampToValueAtTime(.001, ctx.currentTime+t+.2);
+        o.start(ctx.currentTime+t); o.stop(ctx.currentTime+t+.2);
+      });
+    }catch(e){}
+  }
+  $("#snd").addEventListener("click", ()=>{
+    soundOn = !soundOn;
+    $("#snd").textContent = soundOn ? "🔔 Звук включён" : "🔔 Включить звук";
+    $("#snd").classList.toggle("snd-on", soundOn);
+    $("#snd-hint").hidden = soundOn;
+    if(soundOn) beep();
+  });
+
+  function el(tag, cls, text){ const e = document.createElement(tag); if(cls) e.className = cls; if(text!=null) e.textContent = text; return e; }
+  const mkBtn = (label, cls, fn) => { const b = el("button", cls, label); b.type = "button"; b.onclick = fn; return b; };
+
+  function card(o){
+    const d = el("div", "o " + o.status);
+    const top = el("div", "top");
+    top.append(el("div", "tbl", "Стол " + o.table), el("div", "meta", "№" + o.id + " · " + o.time));
+    d.append(top);
+    if(o.customer) d.append(el("div", "who", "👤 " + o.customer.name + " · бонусов: " + o.customer.balance + " · " + o.customer.code));
+    const ul = el("ul");
+    o.items.forEach((i)=>{ const li = el("li"); li.append(el("span", null, i.name + " × " + i.qty), el("span", null, i.subtotal + " сом")); ul.append(li); });
+    d.append(ul);
+    if(o.comment) d.append(el("div", "c", "💬 " + o.comment));
+    const t = el("div", "tot"); t.append(el("span", null, "Итого"), el("span", null, o.total + " сом")); d.append(t);
+    const a = el("div", "act");
+    if(o.status === "new") a.append(mkBtn("Принять в работу", "", ()=>setStatus(STATUS(o.id), "in_progress")));
+    if(o.status === "new" || o.status === "in_progress") a.append(mkBtn("Выдан", "ok", ()=>setStatus(STATUS(o.id), "done")), mkBtn("Отменить", "no", ()=>setStatus(STATUS(o.id), "cancelled")));
+    if(o.status === "done" || o.status === "cancelled"){ d.append(el("div", "meta", o.status_label)); a.append(mkBtn("Вернуть", "alt", ()=>setStatus(STATUS(o.id), "new"))); }
+    d.append(a);
+    return d;
+  }
+
+  function bookCard(b){
+    const d = el("div", "o book " + b.status);
+    const top = el("div", "top");
+    top.append(el("div", "ttl", "📚 Книги · " + b.delivery_label), el("div", "meta", "№" + b.id + " · " + b.time));
+    d.append(top);
+    const ul = el("ul");
+    b.items.forEach((i)=>{ const li = el("li"); li.append(el("span", null, i.title + " × " + i.qty), el("span", null, i.subtotal + " сом")); ul.append(li); });
+    d.append(ul);
+    if(b.comment) d.append(el("div", "c", "💬 " + b.comment));
+    const t = el("div", "tot"); t.append(el("span", null, "Итого"), el("span", null, b.total + " сом")); d.append(t);
+    const who = el("div", "meta"); who.append(document.createTextNode(b.name + " · "));
+    const tel = el("a", null, b.phone); tel.href = "tel:" + b.phone; who.append(tel);
+    d.append(who, el("div", "meta", "📍 " + b.place));
+    const a = el("div", "act");
+    if(b.status === "new") a.append(mkBtn("Принять в работу", "", ()=>setStatus(BOOK_STATUS(b.id), "in_progress")));
+    a.append(mkBtn("Выполнен", "ok", ()=>setStatus(BOOK_STATUS(b.id), "done")), mkBtn("Отменить", "no", ()=>setStatus(BOOK_STATUS(b.id), "cancelled")));
+    d.append(a);
+    return d;
+  }
+
+  async function setStatus(url, status){
+    await fetch(url, {method:"POST", headers:{"X-CSRFToken":csrf, "Content-Type":"application/x-www-form-urlencoded"}, body:"status="+status});
+    poll();
+  }
+
+  async function poll(){
+    try{
+      const r = await fetch(FEED, {cache:"no-store"});
+      if(!r.ok) return;
+      const d = await r.json();
+      const act = $("#active"), rec = $("#recent"), bks = $("#books");
+      act.textContent = ""; rec.textContent = ""; bks.textContent = "";
+      d.active.forEach((o)=>act.append(card(o)));
+      d.recent.forEach((o)=>rec.append(card(o)));
+      d.books.forEach((b)=>bks.append(bookCard(b)));
+      $("#no-active").hidden = d.active.length > 0;
+      $("#no-books").hidden = d.books.length > 0;
+      $("#n-active").textContent = d.active.length;
+      $("#n-books").textContent = d.books.length;
+      const newOrder = lastOrder !== null && d.latest_id > lastOrder;
+      const newBook = lastBook !== null && d.latest_book_id > lastBook;
+      if(newOrder || newBook){ beep(); document.title = (newBook && !newOrder ? "📚 Новый заказ книги!" : "🔔 Новый заказ!") + " — Kaafi"; }
+      lastOrder = d.latest_id; lastBook = d.latest_book_id;
+    }catch(e){}
+  }
+  document.addEventListener("visibilitychange", ()=>{ if(!document.hidden) document.title = BASE_TITLE; });
+  poll(); setInterval(poll, 4000);
+})();
+</script>
+</body>
+</html>

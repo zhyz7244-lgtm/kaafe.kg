@@ -1,0 +1,21 @@
+<article class="card book-card {% if not b.is_available %}soldout{% endif %}">
+  <a class="photo book-photo" href="{{ b.get_absolute_url }}" tabindex="-1" aria-hidden="true">
+    {% if b.image %}<img src="{{ b.image.url }}" alt="" loading="lazy">{% else %}<div class="ph"><span class="book-ico">📖</span></div>{% endif %}
+    {% if b.has_discount %}<span class="badge">−{{ b.discount_percent }}%</span>{% endif %}
+  </a>
+  <div class="card-body">
+    <h3><a class="plain" href="{{ b.get_absolute_url }}">{{ b.title }}</a></h3>
+    {% if b.author %}<div class="vol">{{ b.author }}</div>{% endif %}
+    {% if b.category %}<div class="tag">{{ b.category.name }}</div>{% endif %}
+    <div class="buy-row">
+      <div class="price">{% if b.has_discount %}<s>{{ b.old_price }}</s> {% endif %}<b>{{ b.price }}</b> сом</div>
+      {% if with_add %}
+        {% if b.is_available %}
+        <button type="button" class="btn add book-add" data-id="{{ b.pk }}" data-title="{{ b.title }}" data-price="{{ b.price }}" data-photo="{% if b.image %}{{ b.image.url }}{% endif %}">В корзину</button>
+        {% else %}<span class="na">Нет в наличии</span>{% endif %}
+      {% else %}
+        <a class="btn add" href="{{ b.get_absolute_url }}">Подробнее</a>
+      {% endif %}
+    </div>
+  </div>
+</article>

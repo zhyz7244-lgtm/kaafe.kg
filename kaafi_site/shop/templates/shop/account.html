@@ -1,0 +1,104 @@
+{% load static %}<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% if customer %}Мой профиль{% else %}Вход и регистрация{% endif %} — KAAFI</title>
+  <link rel="icon" href="{% static 'shop/favicon.png' %}" type="image/png">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'shop/style.css' %}">
+</head>
+<body>
+<main style="padding:24px 16px 60px">
+  <div class="profile">
+    <a href="{% url 'home' %}" class="muted" style="text-decoration:none">← На главную</a>
+
+    {% if customer %}
+      <div class="profile-card">
+        <h1>{{ customer.name }}</h1>
+        <p class="muted">+{{ customer.phone }}</p>
+        <p class="muted" style="margin-top:14px;text-transform:uppercase;letter-spacing:.08em;font-size:12px">Ваши бонусы</p>
+        <div class="bal">{{ customer.bonus_balance }}</div>
+        <img class="qr-img" src="{% url 'account_qr' %}" alt="Ваш QR-код">
+        <b style="letter-spacing:.15em">{{ customer.qr_text }}</b>
+        <p class="muted" style="margin-top:8px">Покажите QR-код на кассе. {{ bonus_percent }}% от каждого выданного заказа начисляется бонусами.</p>
+      </div>
+
+      <div class="profile-card" style="text-align:left">
+        <h2 style="margin-bottom:12px">История бонусов</h2>
+        <ul class="hist">
+          {% for t in transactions %}
+          <li><span>{{ t.note|default:"—" }}<small>{{ t.created_at|date:"d.m.Y H:i" }}</small></span>
+            <span class="{% if t.amount > 0 %}plus{% else %}minus{% endif %}">{% if t.amount > 0 %}+{% endif %}{{ t.amount }}</span></li>
+          {% empty %}
+          <li class="muted">Пока пусто — бонусы появятся после первого выданного заказа.</li>
+          {% endfor %}
+        </ul>
+      </div>
+
+      <div class="profile-card" style="text-align:left">
+        <h2 style="margin-bottom:12px">Мои заказы</h2>
+        <ul class="hist">
+          {% for o in orders %}
+          <li><span>№{{ o.pk }} · стол {{ o.table.number }}<small>{{ o.created_at|date:"d.m.Y H:i" }}</small></span>
+            <span>{{ o.total }} сом · {{ o.get_status_display }}</span></li>
+          {% empty %}
+          <li class="muted">Заказов пока нет.</li>
+          {% endfor %}
+        </ul>
+      </div>
+
+      <div class="profile-card" style="text-align:left">
+        <h2 style="margin-bottom:12px">Настройки профиля</h2>
+        {% if request.GET.saved == "name" %}<div class="notice ok">Имя сохранено.</div>{% endif %}
+        {% if request.GET.saved == "password" %}<div class="notice ok">Пароль изменён.</div>{% endif %}
+        {% if request.GET.error == "oldpass" %}<div class="notice err">Текущий пароль указан неверно.</div>{% endif %}
+        {% if request.GET.error == "newpass" %}<div class="notice err">Новый пароль — не короче 6 символов.</div>{% endif %}
+        <form class="review-form" method="post" action="{% url 'account_settings' %}" style="max-width:none;border:0;padding:0;margin:0 0 14px">
+          {% csrf_token %}<input type="hidden" name="action" value="name">
+          <input type="text" name="name" value="{{ customer.name }}" required maxlength="60" aria-label="Имя">
+          <button class="btn alt" type="submit">Сохранить имя</button>
+        </form>
+        <form class="review-form" method="post" action="{% url 'account_settings' %}" style="max-width:none;border:0;padding:0;margin:0">
+          {% csrf_token %}<input type="hidden" name="action" value="password">
+          <input type="password" name="old" placeholder="Текущий пароль" required autocomplete="current-password">
+          <input type="password" name="new" placeholder="Новый пароль (от 6 символов)" required minlength="6" autocomplete="new-password">
+          <button class="btn alt" type="submit">Сменить пароль</button>
+        </form>
+        <p class="muted" style="margin-top:10px">Если вас зарегистрировали на кассе — смените временный пароль на свой.</p>
+      </div>
+
+      <form method="post" action="{% url 'account_logout' %}" style="text-align:center">
+        {% csrf_token %}
+        <button class="btn alt" type="submit">Выйти</button>
+      </form>
+    {% else %}
+      <p class="muted">Постоянным гостям — {{ bonus_percent }}% бонусами с каждого заказа. Заказать можно и без регистрации.</p>
+
+      {% if mode == "register" %}
+      <form class="review-form" method="post" action="{% url 'account_register' %}" style="max-width:none">
+        {% csrf_token %}
+        <h3>Регистрация</h3>
+        {% for f in register_form %}{% for e in f.errors %}<div class="notice err">{{ f.label }}: {{ e }}</div>{% endfor %}{% endfor %}
+        <input type="text" name="name" placeholder="Ваше имя" required maxlength="60" value="{{ register_form.name.value|default:'' }}">
+        <input type="tel" name="phone" placeholder="Номер телефона" required maxlength="30" value="{{ register_form.phone.value|default:'' }}">
+        <input type="password" name="password" placeholder="Пароль (от 6 символов)" required minlength="6">
+        <button class="btn" type="submit">Зарегистрироваться</button>
+        <a href="?mode=login" class="muted">Уже есть аккаунт? Войти</a>
+      </form>
+      {% else %}
+      <form class="review-form" method="post" action="{% url 'account_login' %}" style="max-width:none">
+        {% csrf_token %}
+        <h3>Вход</h3>
+        {% for e in login_form.non_field_errors %}<div class="notice err">{{ e }}</div>{% endfor %}
+        <input type="tel" name="phone" placeholder="Номер телефона" required value="{{ login_form.phone.value|default:'' }}">
+        <input type="password" name="password" placeholder="Пароль" required>
+        <button class="btn" type="submit">Войти</button>
+        <a href="?mode=register" class="muted">Нет аккаунта? Зарегистрироваться</a>
+      </form>
+      {% endif %}
+    {% endif %}
+  </div>
+</main>
+</body>
+</html>

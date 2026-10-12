@@ -1,0 +1,63 @@
+@import 'tailwindcss';
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  min-height: 100%;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: #f1e4c8;
+}
+
+/* Ornamental double-line frame, echoing the gold border on the client's
+   printed menu poster. */
+.ornate-frame {
+  border: 1.5px solid #b8934f;
+  outline: 1px solid #b8934f;
+  outline-offset: 5px;
+}
+
+.ornament-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6em;
+  color: #b8934f;
+}
+.ornament-divider::before,
+.ornament-divider::after {
+  content: '';
+  height: 1px;
+  width: 2.5em;
+  background: #c9a768;
+}
+
+/* Reusable form field style. In a layer so Tailwind utilities (pl-10, w-24...) can override it. */
+@layer components {
+  .input {
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.5rem;
+    border: 1px solid #e3d2a5;
+    background: #ffffff;
+    /* 16px: anything smaller makes iPhones zoom the page when a field is focused. */
+    font-size: 1rem;
+    color: #2e1f16;
+    outline: none;
+  }
+  .input:focus {
+    border-color: #b8934f;
+  }
+}

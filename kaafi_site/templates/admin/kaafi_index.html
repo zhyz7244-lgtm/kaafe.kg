@@ -1,0 +1,49 @@
+{% extends "admin/index.html" %}
+{% block content %}
+<div class="kaafi-actions">
+  <a class="a1" href="{% url 'staff_orders' %}">Заказы онлайн (со звуком)</a>
+  <a class="a2" href="{% url 'staff_qr_print' %}" target="_blank">QR-коды столов</a>
+  <a class="a1" href="{% url 'staff_stats' %}">Статистика</a>
+  <a class="a2" href="{% url 'staff_notifications' %}">Уведомления</a>
+  <a class="a1" href="{% url 'staff_customers' %}">Клиенты и бонусы (касса)</a>
+  <a class="a3" href="{% url 'admin:shop_book_add' %}">+ Новая книга</a>
+  <a class="a3" href="{% url 'admin:shop_product_add' %}">+ Новый товар</a>
+  <a class="a3" href="{% url 'home' %}" target="_blank">Открыть сайт ↗</a>
+</div>
+
+{% if not stats.notify_on %}
+<div class="kaafi-warn">🔔 Уведомления в Telegram / WhatsApp ещё не подключены — о новых заказах вы узнаете только на странице «Заказы». <a href="{% url 'staff_notifications' %}">Подключить за 2 минуты →</a></div>
+{% endif %}
+
+<div class="stats">
+  <a class="stat {% if stats.new_orders %}alert{% endif %}" href="{% url 'admin:shop_order_changelist' %}?status__exact=new"><span>Новые заказы</span><b>{{ stats.new_orders }}</b><small>ждут принятия</small></a>
+  <a class="stat" href="{% url 'admin:shop_order_changelist' %}"><span>Заказов сегодня</span><b>{{ stats.orders_today }}</b><small>без отменённых</small></a>
+  <div class="stat"><span>Выручка сегодня</span><b>{{ stats.revenue_today }}</b><small>сом</small></div>
+  <a class="stat {% if stats.pending_reviews %}alert{% endif %}" href="{% url 'admin:shop_review_changelist' %}?is_approved__exact=0"><span>Отзывы на проверке</span><b>{{ stats.pending_reviews }}</b><small>нужно одобрить</small></a>
+  <a class="stat {% if stats.new_book_orders %}alert{% endif %}" href="{% url 'admin:shop_bookorder_changelist' %}?status__exact=new"><span>Заказы книг</span><b>{{ stats.new_book_orders }}</b><small>новых</small></a>
+  <a class="stat" href="{% url 'admin:shop_customer_changelist' %}"><span>Клиентов</span><b>{{ stats.customers }}</b><small>зарегистрировано</small></a>
+  <a class="stat" href="{% url 'admin:shop_product_changelist' %}"><span>Товаров в меню</span><b>{{ stats.products }}</b><small>со скидкой: {{ stats.discounted }}</small></a>
+</div>
+
+<div class="module latest">
+  <table>
+    <caption>Последние заказы</caption>
+    <thead><tr><th>№</th><th>Стол</th><th>Что заказали</th><th>Сумма</th><th>Статус</th><th>Время</th></tr></thead>
+    <tbody>
+    {% for o in stats.latest %}
+      <tr>
+        <td><a href="{% url 'admin:shop_order_change' o.pk %}">№{{ o.pk }}</a></td>
+        <td><b>Стол {{ o.table.number }}</b></td>
+        <td>{% for i in o.items.all %}{{ i.name }} ×{{ i.qty }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
+        <td>{{ o.total }} сом</td>
+        <td><span class="pill-s {{ o.status }}">{{ o.get_status_display }}</span></td>
+        <td>{{ o.created_at|date:"d.m H:i" }}</td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="6">Заказов пока нет.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{{ block.super }}
+{% endblock %}

@@ -1,0 +1,223 @@
+{% load static %}<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>KAAFI — Books · Coffee</title>
+  <meta name="description" content="Кофейня Kaafi в Бишкеке: книги, кофе, атмосфера. Закажите прямо со стола.">
+  <link rel="icon" href="{% static 'shop/favicon.png' %}" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'shop/style.css' %}">
+</head>
+<body>
+<div class="app">
+
+  <!-- ===== Сайдбар ===== -->
+  {% include "shop/_sidebar.html" with active="menu" %}
+
+  <!-- ===== Основная часть ===== -->
+  <main class="main" id="top">
+    <div class="topbar">
+      <button class="burger" id="burger" aria-label="Меню навигации">☰</button>
+      <div class="search">
+        <svg class="ico" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+        <input type="search" id="search" placeholder="Поиск по меню" autocomplete="off">
+      </div>
+      {% if table %}<span class="table-chip">Стол № {{ table.number }}</span>{% endif %}
+    </div>
+
+    <h1 class="title">Меню</h1>
+    <p class="subtitle">Выберите книгу. Закажите кофе. Наслаждайтесь моментом.</p>
+
+    <div class="pills-wrap" id="pills-wrap">
+      <div class="pills" id="pills">
+        <button class="pill active" data-cat="all">Всё</button>
+        {% for c in categories %}<button class="pill" data-cat="{{ c.pk }}">{{ c.name }}</button>{% endfor %}
+      </div>
+    </div>
+
+    {% for c in categories %}
+    <section class="cat" data-cat="{{ c.pk }}">
+      <h2 class="cat-title">{{ c.name }}</h2>
+      <div class="grid">
+        {% for p in c.products.all %}
+        <article class="card {% if not p.is_available %}soldout{% endif %}"
+                 data-id="{{ p.pk }}" data-name="{{ p.name }}" data-volume="{{ p.volume }}"
+                 data-price="{{ p.final_price }}" data-search="{{ p.name|lower }} {{ p.description|lower }}">
+          <div class="photo">
+            {% if p.image %}
+              <img src="{{ p.image.url }}" alt="{{ p.name }}" loading="lazy">
+            {% else %}
+              <div class="ph">{% include "shop/_art.html" with kind=p.art_kind tone=p.art_tone %}</div>
+            {% endif %}
+            {% if p.has_discount %}<span class="badge">−{{ p.discount_percent }}%</span>{% endif %}
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <h3>{{ p.name }}</h3>
+              <div class="price">
+                {% if p.has_discount %}<s>{{ p.price }}</s> {% endif %}<b>{{ p.final_price }}</b> сом
+              </div>
+            </div>
+            {% if p.volume %}<div class="vol">{{ p.volume }}</div>{% endif %}
+            {% if p.description %}<p class="desc">{{ p.description }}</p>{% endif %}
+            {% if p.is_available %}
+            <div class="actions">
+              <div class="stepper">
+                <button type="button" data-act="minus" aria-label="Меньше">−</button>
+                <span data-qty>1</span>
+                <button type="button" data-act="plus" aria-label="Больше">+</button>
+              </div>
+              <button type="button" class="btn add" data-act="add">В заказ</button>
+            </div>
+            {% else %}
+            <div class="na">Сейчас нет в наличии</div>
+            {% endif %}
+          </div>
+        </article>
+        {% endfor %}
+      </div>
+    </section>
+    {% empty %}
+    <p class="empty">Меню скоро появится.</p>
+    {% endfor %}
+    <p class="empty" id="nothing" hidden>Ничего не найдено.</p>
+
+    <!-- ===== Книги (витрина) ===== -->
+    {% if books_total %}
+    <section class="books" id="books">
+      <div class="reviews-head">
+        <div>
+          <h2 class="cat-title" style="margin-bottom:0">Книги</h2>
+          <p class="subtitle" style="margin:4px 0 0">{{ books_total }} {% if books_total == 1 %}книга{% else %}книг{% endif %} по хорошим ценам · доставка или самовывоз</p>
+        </div>
+        <a class="btn gold" href="{% url 'books' %}">Все книги →</a>
+      </div>
+      <div class="grid books-grid" style="margin-top:16px">
+        {% for b in featured_books %}{% include "shop/_book_card.html" %}{% endfor %}
+      </div>
+    </section>
+    {% endif %}
+
+    <!-- ===== Отзывы ===== -->
+    <section class="reviews" id="reviews">
+      <div class="reviews-head">
+        <div>
+          <h2 class="cat-title">Отзывы гостей</h2>
+          {% if review_count %}<div class="rating-sum"><span class="big">{{ review_avg }}</span><span class="stars">★★★★★</span><span>{{ review_count }} {% if review_count == 1 %}отзыв{% else %}отзывов{% endif %}</span></div>{% endif %}
+        </div>
+        <button class="btn" id="open-review" type="button">Оставить отзыв</button>
+      </div>
+      {% if review_sent %}<div class="notice ok">Спасибо! Ваш отзыв появится на сайте после проверки.</div>{% endif %}
+
+      <div class="review-list">
+        {% for r in reviews %}
+        <article class="review">
+          <div class="review-top"><b>{{ r.name }}</b><span class="stars">{% for i in "12345" %}{% if forloop.counter <= r.rating %}★{% else %}☆{% endif %}{% endfor %}</span></div>
+          <p>{{ r.text|linebreaksbr }}</p>
+          {% if r.photos.all %}
+          <div class="review-photos">
+            {% for ph in r.photos.all %}<a href="{{ ph.image.url }}" target="_blank"><img src="{{ ph.image.url }}" alt="Фото от {{ r.name }}" loading="lazy"></a>{% endfor %}
+          </div>
+          {% endif %}
+          <small>{{ r.created_at|date:"j E Y" }}</small>
+        </article>
+        {% empty %}
+        <p class="empty">Пока нет отзывов — будьте первым!</p>
+        {% endfor %}
+      </div>
+
+      <form class="review-form" id="review-form" method="post" action="{% url 'review_create' %}" enctype="multipart/form-data" {% if not review_open %}hidden{% endif %}>
+        {% csrf_token %}
+        <h3>Оставить отзыв</h3>
+        {% if review_form.non_field_errors %}<div class="notice err">{{ review_form.non_field_errors|join:" " }}</div>{% endif %}
+        {% for f in review_form.visible_fields %}{% for e in f.errors %}<div class="notice err">{{ f.label }}: {{ e }}</div>{% endfor %}{% endfor %}
+        {{ review_form.name }}
+        <div class="rate" id="rate" role="radiogroup" aria-label="Оценка">
+          {% for i in "12345" %}<button type="button" data-v="{{ i }}" aria-label="{{ i }} из 5">☆</button>{% endfor %}
+        </div>
+        {{ review_form.rating }}
+        {{ review_form.text }}
+        <label class="file-btn">
+          <svg class="ico" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="1.6"/><path d="M21 16l-5-5-8 8"/></svg>
+          <span id="file-label">Прикрепить фото</span>
+          <input type="file" name="photos" accept="image/*" multiple>
+        </label>
+        <small class="file-hint">до 4 фото, каждое до 5 МБ</small>
+        <div class="notice err" id="review-error" hidden></div>
+        <button class="btn" type="submit">Отправить отзыв</button>
+      </form>
+    </section>
+
+    <!-- ===== Контакты ===== -->
+    <section class="contacts" id="contacts">
+      <div>
+        <h2>Будем рады видеть вас</h2>
+        <p><svg class="ico" viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg> {{ cafe.address }}</p>
+        <p><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> {{ cafe.hours }}</p>
+      </div>
+      <a class="btn gold" href="{{ cafe.instagram_url }}" target="_blank" rel="noreferrer"><svg class="ico" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.3" cy="6.7" r=".6"/></svg> {{ cafe.instagram_handle }}</a>
+    </section>
+  </main>
+
+  <!-- ===== Корзина ===== -->
+  <aside class="cart" id="cart" aria-label="Ваш заказ">
+    <div class="cart-head">
+      <h2>Ваш заказ</h2>
+      <button class="close" id="cart-close" aria-label="Закрыть">✕</button>
+    </div>
+
+    <div class="cart-table">
+      {% if table %}
+        <span>Стол № <b>{{ table.number }}</b></span>
+        <input type="hidden" id="table-number" value="{{ table.number }}">
+      {% else %}
+        <label for="table-number">Номер вашего стола</label>
+        <select id="table-number">
+          <option value="">— выберите —</option>
+          {% for t in tables %}<option value="{{ t.number }}">{{ t.number }}</option>{% endfor %}
+        </select>
+      {% endif %}
+    </div>
+
+    {% if customer %}
+    <div class="bonus-note">👤 {{ customer.name }} · бонусов: <b>{{ customer.bonus_balance }}</b><br><small>+{{ bonus_percent }}% от заказа начислим после выдачи</small></div>
+    {% else %}
+    <div class="bonus-note">Заказать можно без регистрации. <a href="{% url 'account' %}">Зарегистрируйтесь</a> — копите {{ bonus_percent }}% бонусами с каждого заказа.</div>
+    {% endif %}
+
+    <div class="cart-items" id="cart-items"></div>
+    <p class="cart-empty" id="cart-empty">Пока пусто. Добавьте что-нибудь из меню.</p>
+
+    <div class="cart-foot" id="cart-foot">
+      <textarea id="comment" rows="2" maxlength="300" placeholder="Комментарий (необязательно)"></textarea>
+      <div class="total"><span>Итого</span><b id="total">0 сом</b></div>
+      <div class="notice err" id="order-error" hidden></div>
+      <button class="btn big" id="place-order" type="button">Оформить заказ</button>
+    </div>
+
+    <div class="done" id="done" hidden>
+      <div class="done-icon">✓</div>
+      <h3>Заказ принят!</h3>
+      <p id="done-text"></p>
+      <div class="track" id="track" hidden>
+        <b id="track-title">Принят</b>
+        <div class="steps"><i class="on"></i><i></i><i></i></div>
+        <small id="track-sub">Мы получили заказ.</small>
+      </div>
+      <button class="btn" id="done-close" type="button">Заказать ещё</button>
+    </div>
+  </aside>
+
+  <!-- Плавающая кнопка корзины (мобильные) -->
+  <button class="cart-fab" id="cart-fab" type="button" hidden>
+    Заказ · <span id="fab-count">0</span> · <b id="fab-total">0 сом</b>
+  </button>
+  <div class="scrim" id="scrim" hidden></div>
+</div>
+
+<script>window.ORDER_URL = "{% url 'order_create' %}";</script>
+<script src="{% static 'shop/app.js' %}"></script>
+</body>
+</html>

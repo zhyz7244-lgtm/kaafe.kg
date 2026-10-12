@@ -1,0 +1,92 @@
+{% load static %}<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Аккаунт — Kaafi</title>
+  <link rel="icon" href="{% static 'shop/favicon.png' %}" type="image/png">
+  <style>
+    :root{--bg:#F6EEDC;--paper:#FBF6EA;--line:#E3D2A5;--ink:#2E1F16;--gold:#B8934F;--brown:#8B5E3C}
+    *{box-sizing:border-box;margin:0}
+    body{font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--ink);padding:16px;max-width:760px;margin:0 auto}
+    h1{font-size:24px;margin-bottom:4px}
+    .lead{color:#7A6A52;font-size:14px;margin-bottom:16px}
+    .box{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:18px;margin-bottom:16px}
+    .box h2{font-size:18px;margin-bottom:10px}
+    label{display:block;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#7A6A52;margin:10px 0 4px}
+    input{width:100%;padding:11px 14px;border:1px solid var(--line);border-radius:12px;background:#fff;font:inherit;outline:0}
+    input:focus{border-color:var(--gold)}
+    button{border:0;border-radius:999px;padding:11px 18px;font:600 14px inherit;background:var(--brown);color:#fff;cursor:pointer;margin-top:12px}
+    button.alt{background:#fff;color:var(--ink);border:1px solid var(--line)}
+    .msg{padding:10px 14px;border-radius:12px;font-size:14px;margin-bottom:14px}
+    .msg.ok{background:#E7F3E8;color:#2E7D32}.msg.err{background:#FBE9E7;color:#B3261E}
+    .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    @media(max-width:560px){.two{grid-template-columns:1fr}}
+    .u{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 0;border-top:1px solid var(--line)}
+    .u:first-of-type{border-top:0}
+    .u b{flex:1;min-width:120px}
+    .u form{display:flex;gap:6px;align-items:center}
+    .u input{width:150px;padding:8px 12px}
+    .u button{margin:0;padding:8px 14px}
+    .off{opacity:.55}
+    small{color:#7A6A52}
+  </style>
+</head>
+<body>
+{% include "shop/_staffnav.html" with active="account" %}
+<h1>Мой аккаунт</h1>
+<p class="lead">Вы вошли как <b>{{ me.username }}</b>{% if me.is_superuser %} (главный администратор){% else %} (сотрудник){% endif %}. Логин и пароль можно менять в любой момент.</p>
+
+{% if msg %}<div class="msg ok">{{ msg }}</div>{% endif %}
+{% if err %}<div class="msg err">{{ err }}</div>{% endif %}
+
+<section class="box">
+  <h2>Логин и имя</h2>
+  <form method="post">{% csrf_token %}<input type="hidden" name="action" value="profile">
+    <div class="two">
+      <div><label>Логин для входа</label><input name="username" value="{{ me.username }}" required maxlength="150"></div>
+      <div><label>Имя (как вас называть)</label><input name="first_name" value="{{ me.first_name }}" maxlength="60"></div>
+    </div>
+    <button type="submit">Сохранить</button>
+  </form>
+</section>
+
+<section class="box">
+  <h2>Сменить пароль</h2>
+  <form method="post">{% csrf_token %}<input type="hidden" name="action" value="password">
+    <label>Текущий пароль</label><input type="password" name="old" required autocomplete="current-password">
+    <div class="two">
+      <div><label>Новый пароль</label><input type="password" name="new" required minlength="8" autocomplete="new-password"></div>
+      <div><label>Ещё раз</label><input type="password" name="new2" required minlength="8" autocomplete="new-password"></div>
+    </div>
+    <small>Не короче 8 символов, не только цифры.</small><br>
+    <button type="submit">Изменить пароль</button>
+  </form>
+</section>
+
+{% if me.is_superuser %}
+<section class="box">
+  <h2>Сотрудники (бариста, кассиры)</h2>
+  <p class="lead" style="margin-bottom:8px">Сотрудник входит в панель со своим логином и видит заказы, клиентов и бонусы, книги, статистику. Настройки сайта и аккаунты ему недоступны.</p>
+  {% for u in staff_users %}
+  <div class="u {% if not u.is_active %}off{% endif %}">
+    <b>{{ u.username }}{% if u.first_name %} <small>· {{ u.first_name }}</small>{% endif %}{% if not u.is_active %} <small>(отключён)</small>{% endif %}</b>
+    <form method="post">{% csrf_token %}<input type="hidden" name="action" value="reset_staff"><input type="hidden" name="id" value="{{ u.pk }}">
+      <input type="password" name="password" placeholder="Новый пароль" required minlength="8" autocomplete="new-password"><button class="alt" type="submit">Сменить пароль</button></form>
+    <form method="post">{% csrf_token %}<input type="hidden" name="action" value="toggle_staff"><input type="hidden" name="id" value="{{ u.pk }}">
+      <button class="alt" type="submit">{% if u.is_active %}Отключить{% else %}Включить{% endif %}</button></form>
+  </div>
+  {% empty %}<p class="lead">Пока только вы.</p>{% endfor %}
+
+  <form method="post" style="margin-top:12px;border-top:1px solid var(--line);padding-top:6px">{% csrf_token %}<input type="hidden" name="action" value="add_staff">
+    <div class="two">
+      <div><label>Логин сотрудника</label><input name="username" required maxlength="150" autocomplete="off"></div>
+      <div><label>Имя</label><input name="first_name" maxlength="60"></div>
+    </div>
+    <label>Пароль</label><input type="password" name="password" required minlength="8" autocomplete="new-password">
+    <button type="submit">Добавить сотрудника</button>
+  </form>
+</section>
+{% endif %}
+</body>
+</html>

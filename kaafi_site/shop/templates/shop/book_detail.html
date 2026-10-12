@@ -1,0 +1,78 @@
+{% load static %}<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ book.title }} — Книги — KAAFI</title>
+  <meta name="description" content="{{ book.title }}{% if book.author %}, {{ book.author }}{% endif %} — {{ book.price }} сом. Закажите онлайн с доставкой или заберите в кофейне Kaafi.">
+  <link rel="icon" href="{% static 'shop/favicon.png' %}" type="image/png">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'shop/style.css' %}">
+</head>
+<body>
+<div class="app">
+  {% include "shop/_sidebar.html" with active="books" %}
+
+  <main class="main" id="top">
+    <div class="topbar">
+      <button class="burger" id="burger" aria-label="Меню навигации">☰</button>
+      <form class="search" method="get" action="{% url 'books' %}" role="search">
+        <svg class="ico" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+        <input type="search" name="q" placeholder="Название, автор или код книги" autocomplete="off">
+      </form>
+    </div>
+
+    <nav class="crumbs" aria-label="Навигация">
+      <a href="{% url 'books' %}">← Все книги</a>
+      {% if book.category %}<span>/</span><a href="{% url 'books' %}?cat={{ book.category.pk }}">{{ book.category.name }}</a>{% endif %}
+    </nav>
+
+    <article class="detail">
+      <div class="detail-photo">
+        {% if book.image %}<a href="{{ book.image.url }}" target="_blank"><img src="{{ book.image.url }}" alt="{{ book.title }}"></a>
+        {% else %}<div class="ph"><span class="book-ico">📖</span></div>{% endif %}
+        {% if book.has_discount %}<span class="badge">−{{ book.discount_percent }}%</span>{% endif %}
+      </div>
+      <div class="detail-info">
+        <h1>{{ book.title }}</h1>
+        {% if book.author %}<p class="author">{{ book.author }}</p>{% endif %}
+        {% if book.category %}<div class="tag">{{ book.category.name }}</div>{% endif %}
+        <div class="detail-price">{% if book.has_discount %}<s>{{ book.old_price }} сом</s>{% endif %}<b>{{ book.price }}</b> сом</div>
+
+        {% if book.is_available %}
+        <div class="detail-buy">
+          <div class="stepper" id="dq-stepper">
+            <button type="button" data-dq="-1" aria-label="Меньше">−</button>
+            <span id="dq">1</span>
+            <button type="button" data-dq="1" aria-label="Больше">+</button>
+          </div>
+          <button type="button" class="btn big book-add" data-id="{{ book.pk }}" data-title="{{ book.title }}" data-price="{{ book.price }}" data-photo="{% if book.image %}{{ book.image.url }}{% endif %}" data-qty-from="#dq">Добавить в корзину</button>
+        </div>
+        <ul class="perks">
+          <li>🚚 Доставим по адресу — укажете при оформлении</li>
+          <li>🏪 Или заберите в кофейне: {{ cafe.address }}</li>
+          <li>☕ Оплата при получении</li>
+        </ul>
+        {% else %}
+        <div class="notice err">Сейчас нет в наличии.</div>
+        {% endif %}
+
+        {% if book.description %}<h2 class="cat-title" style="font-size:20px;margin-top:22px">О книге</h2><p class="descr">{{ book.description|linebreaksbr }}</p>{% endif %}
+        {% if book.sku %}<p class="muted" style="margin-top:12px">Код: {{ book.sku }}</p>{% endif %}
+      </div>
+    </article>
+
+    {% if similar %}
+    <h2 class="cat-title">Похожие книги</h2>
+    <div class="grid books-grid">
+      {% for b in similar %}{% include "shop/_book_card.html" with with_add=True %}{% endfor %}
+    </div>
+    {% endif %}
+  </main>
+
+  {% include "shop/_book_cart.html" %}
+</div>
+<script>window.CUSTOMER = {% if customer %}{name: "{{ customer.name|escapejs }}", phone: "{{ customer.phone|escapejs }}"}{% else %}null{% endif %}; window.BOOK_ORDER_URL = "{% url 'book_order_create' %}";</script>
+<script src="{% static 'shop/books.js' %}"></script>
+</body>
+</html>

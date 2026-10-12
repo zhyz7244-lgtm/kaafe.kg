@@ -1,0 +1,81 @@
+{% load static %}<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Импорт книг — Kaafi</title>
+  <link rel="icon" href="{% static 'shop/favicon.png' %}" type="image/png">
+  <style>
+    :root{--bg:#F6EEDC;--paper:#FBF6EA;--line:#E3D2A5;--ink:#2E1F16;--gold:#B8934F;--brown:#8B5E3C}
+    *{box-sizing:border-box;margin:0}
+    body{font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--ink);padding:16px;max-width:820px;margin:0 auto}
+    h1{font-size:24px;margin-bottom:4px}
+    .lead{color:#7A6A52;font-size:14px;margin-bottom:18px}
+    .box{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:18px;margin-bottom:16px}
+    .box h2{font-size:18px;margin-bottom:6px}
+    ol,ul{margin:10px 0 14px 20px;font-size:14px;line-height:1.7;color:#4A3A2C}
+    code{background:#F1E4C8;padding:1px 6px;border-radius:6px;font-size:13px}
+    input[type=file]{display:block;margin:12px 0;font:inherit;width:100%;padding:12px;border:1px dashed var(--gold);border-radius:12px;background:#fff}
+    button,a.b{border:0;border-radius:999px;padding:11px 18px;font:600 14px inherit;background:var(--brown);color:#fff;cursor:pointer;text-decoration:none;display:inline-block}
+    a.b.alt{background:#fff;color:var(--ink);border:1px solid var(--line)}
+    .msg{margin-top:12px;font-size:14px;padding:10px 14px;border-radius:12px}
+    .msg.ok{background:#E7F3E8;color:#2E7D32}.msg.err{background:#FBE9E7;color:#B3261E}.msg.warn{background:#FFF4D6;color:#6b5400}
+    .msg ul{margin:6px 0 0 18px;max-height:200px;overflow:auto}
+    .stat{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+    .stat div{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:12px 16px}
+    .stat b{display:block;font-size:24px}
+    small{color:#7A6A52}
+  </style>
+</head>
+<body>
+{% include "shop/_staffnav.html" with active="books" %}
+<h1>Загрузка книг</h1>
+<p class="lead">Если книг много (у вас около 300), удобнее загрузить их таблицей, а потом пачкой добавить фото. Отдельную книгу можно добавить и вручную: <a href="{% url 'admin:shop_book_add' %}">Админка → Книги → Добавить</a>.</p>
+
+<div class="stat">
+  <div><small>Книг на сайте</small><b>{{ books_total }}</b></div>
+  <div><small>Без фото</small><b>{{ no_photo }}</b></div>
+  <div style="display:flex;align-items:center"><a class="b alt" href="{% url 'admin:shop_book_changelist' %}?photo=no">Показать книги без фото</a></div>
+</div>
+
+<section class="box" id="csv">
+  <h2>1. Импорт списка книг из таблицы</h2>
+  <ol>
+    <li>Скачайте шаблон и откройте его в Excel / Google Таблицах: <a class="b alt" href="{% url 'staff_books_template' %}">Скачать шаблон (CSV)</a></li>
+    <li>Заполните строки: <code>Название</code>, <code>Цена</code> обязательны; остальное — <code>Автор</code>, <code>Жанр</code>, <code>Старая цена</code> (для скидки), <code>Код</code>, <code>В наличии</code> (да/нет), <code>Описание</code>.</li>
+    <li>Сохраните как <b>CSV UTF-8</b> и загрузите ниже. Повторная загрузка <b>обновляет</b> книги (по коду или по названию+автору), дублей не будет.</li>
+  </ol>
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <input type="hidden" name="kind" value="csv">
+    <input type="file" name="file" accept=".csv,text/csv,text/plain" required>
+    <button type="submit">Загрузить список</button>
+  </form>
+  {% if result.csv_error %}<div class="msg err">{{ result.csv_error }}</div>{% endif %}
+  {% if result.csv %}
+    <div class="msg ok">Готово: добавлено <b>{{ result.csv.created }}</b>, обновлено <b>{{ result.csv.updated }}</b>.</div>
+    {% if result.csv.errors %}<div class="msg warn">Пропущено строк: {{ result.csv.errors|length }}<ul>{% for e in result.csv.errors %}<li>{{ e }}</li>{% endfor %}</ul></div>{% endif %}
+  {% endif %}
+</section>
+
+<section class="box" id="photos">
+  <h2>2. Фото книг пачкой</h2>
+  <p class="lead" style="margin-bottom:0">Выберите сразу много фото. Сайт сам подставит каждое фото книге по <b>имени файла</b>:</p>
+  <ul>
+    <li>файл <code>B-001.jpg</code> → книга с кодом <code>B-001</code>;</li>
+    <li>или файл <code>Маленький принц.jpg</code> → книга с таким названием.</li>
+  </ul>
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <input type="hidden" name="kind" value="photos">
+    <input type="file" name="photos" accept="image/*" multiple required>
+    <button type="submit">Загрузить фото</button>
+  </form>
+  {% if result.photos %}
+    <div class="msg ok">Фото прикреплено: <b>{{ result.photos.matched }}</b>.</div>
+    {% if result.photos.missing %}<div class="msg warn">Не нашли книгу для файлов ({{ result.photos.missing|length }}) — проверьте имена:<ul>{% for m in result.photos.missing %}<li>{{ m }}</li>{% endfor %}</ul></div>{% endif %}
+    {% if result.photos.errors %}<div class="msg err">Ошибки:<ul>{% for e in result.photos.errors %}<li>{{ e }}</li>{% endfor %}</ul></div>{% endif %}
+  {% endif %}
+</section>
+</body>
+</html>

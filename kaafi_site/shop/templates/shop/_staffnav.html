@@ -1,0 +1,23 @@
+{% load static %}
+<style>
+  .snav{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:0 0 18px;padding:10px 12px;background:#2E1F16;border-radius:16px}
+  .snav .logo{display:flex;align-items:center;gap:8px;color:#fff;font:700 16px "Playfair Display",Georgia,serif;letter-spacing:.06em;text-decoration:none;margin-right:8px}
+  .snav .logo img{border-radius:50%}
+  .snav a.l{color:#E3D2A5;text-decoration:none;font:600 14px Inter,system-ui,sans-serif;padding:8px 14px;border-radius:999px}
+  .snav a.l:hover{background:rgba(255,255,255,.1);color:#fff}
+  .snav a.l.on{background:#B8934F;color:#2E1F16}
+  .snav .sp{flex:1}
+  @media(max-width:560px){.snav a.l{padding:7px 11px;font-size:13px}.snav .logo span{display:none}}
+</style>
+<nav class="snav" aria-label="Разделы для персонала">
+  <a class="logo" href="{% url 'staff_orders' %}"><img src="{% static 'shop/logo.png' %}" width="30" height="30" alt=""><span>KAAFI</span></a>
+  <a class="l {% if active == 'orders' %}on{% endif %}" href="{% url 'staff_orders' %}">Заказы</a>
+  <a class="l {% if active == 'customers' %}on{% endif %}" href="{% url 'staff_customers' %}">Клиенты и бонусы</a>
+  <a class="l {% if active == 'books' %}on{% endif %}" href="{% url 'staff_books_import' %}">Книги</a>
+  <a class="l {% if active == 'stats' %}on{% endif %}" href="{% url 'staff_stats' %}">Статистика</a>
+  <a class="l {% if active == 'notify' %}on{% endif %}" href="{% url 'staff_notifications' %}">Уведомления</a>
+  <span class="sp"></span>
+  <a class="l {% if active == 'account' %}on{% endif %}" href="{% url 'staff_account' %}">Аккаунт</a>
+  <a class="l" href="{% url 'admin:index' %}">Админка</a>
+  <a class="l" href="{% url 'home' %}" target="_blank">Сайт ↗</a>
+</nav>
