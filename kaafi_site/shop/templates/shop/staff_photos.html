@@ -1,0 +1,129 @@
+{% load static %}<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Фото — Kaafi</title>
+  <link rel="icon" href="{% static 'shop/favicon.png' %}" type="image/png">
+  <style>
+    :root{--bg:#F6EEDC;--paper:#FBF6EA;--line:#E3D2A5;--ink:#2E1F16;--gold:#B8934F;--brown:#8B5E3C}
+    *{box-sizing:border-box;margin:0}
+    body{font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--ink);padding:16px;max-width:1100px;margin:0 auto}
+    h1{font-size:24px;margin-bottom:4px}
+    .lead{color:#7A6A52;font-size:14px;margin-bottom:14px}
+    .bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
+    .bar a{padding:9px 16px;border-radius:999px;border:1px solid var(--line);background:#fff;color:var(--ink);text-decoration:none;font:600 14px inherit}
+    .bar a.on{background:var(--brown);color:#fff;border-color:var(--brown)}
+    .bar .sp{flex:1}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px}
+    .card{background:var(--paper);border:2px solid var(--line);border-radius:16px;overflow:hidden;display:flex;flex-direction:column;transition:border-color .15s}
+    .card.drag{border-color:var(--gold);background:#FFF4D6}
+    .card.ok{border-color:#2E7D32}
+    .card.fail{border-color:#B3261E}
+    .pic{aspect-ratio:1;background:#EFE3C4 center/cover no-repeat;display:flex;align-items:center;justify-content:center;color:#9A8761;font-size:13px;text-align:center;padding:8px;cursor:pointer}
+    .pic.has{color:transparent}
+    .meta{padding:10px 12px 4px;font-size:14px;line-height:1.3}
+    .meta b{display:block}
+    .meta small{color:#7A6A52}
+    .act{padding:8px 12px 12px;display:flex;gap:6px;margin-top:auto}
+    .act button,.act label{flex:1;text-align:center;border:0;border-radius:999px;padding:9px 6px;font:600 13px inherit;cursor:pointer;background:var(--brown);color:#fff}
+    .act button.del{flex:0 0 auto;background:#fff;color:#B3261E;border:1px solid var(--line);padding:9px 12px}
+    .act input{display:none}
+    .st{font-size:12px;padding:0 12px 8px;min-height:18px;color:#7A6A52}
+    .st.err{color:#B3261E}
+    .empty{padding:40px;text-align:center;color:#7A6A52}
+  </style>
+</head>
+<body>
+{% include "shop/_staffnav.html" with active="photos" %}
+<h1>Фото</h1>
+<p class="lead">Нажмите «Загрузить» на нужной карточке или перетащите файл на неё. Фото сохраняется сразу, до 5 МБ.</p>
+
+<div class="bar">
+  <a class="{% if kind == 'menu' %}on{% endif %}" href="?kind=menu{% if only_missing %}&filter=no{% endif %}">Меню</a>
+  <a class="{% if kind == 'books' %}on{% endif %}" href="?kind=books{% if only_missing %}&filter=no{% endif %}">Книги</a>
+  <span class="sp"></span>
+  <span class="lead" style="margin:0">Без фото: <b id="miss">{{ missing }}</b> из {{ total }}</span>
+  {% if only_missing %}
+    <a href="?kind={{ kind }}">Показать все</a>
+  {% else %}
+    <a href="?kind={{ kind }}&filter=no">Только без фото</a>
+  {% endif %}
+</div>
+
+{% if items %}
+<div class="grid">
+  {% for it in items %}
+  <div class="card" data-pk="{{ it.pk }}">
+    <div class="pic {% if it.image %}has{% endif %}"{% if it.image %} style="background-image:url('{{ it.image.url }}')"{% endif %}>Нет фото</div>
+    <div class="meta"><b>{{ it.title }}</b><small>{{ it.sub }}</small></div>
+    <div class="st"></div>
+    <div class="act">
+      <label>Загрузить<input type="file" accept="image/*"></label>
+      <button type="button" class="del" title="Удалить фото"{% if not it.image %} hidden{% endif %}>✕</button>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty">{% if only_missing %}У всех позиций уже есть фото.{% else %}Позиций пока нет.{% endif %}</div>
+{% endif %}
+
+<script>
+(function () {
+  var kind = "{{ kind }}";
+  var csrf = "{{ csrf_token }}";
+  var miss = document.getElementById("miss");
+  function url(pk, act) { return "/staff/photos/" + kind + "/" + pk + "/" + act + "/"; }
+  function status(card, text, cls) {
+    var st = card.querySelector(".st");
+    st.textContent = text || "";
+    st.className = "st" + (cls === "err" ? " err" : "");
+    card.classList.remove("ok", "fail");
+    if (cls) card.classList.add(cls === "err" ? "fail" : "ok");
+  }
+  function bump(d) { miss.textContent = Math.max(0, +miss.textContent + d); }
+  function setPic(card, src) {
+    var pic = card.querySelector(".pic"), had = pic.classList.contains("has");
+    pic.classList.toggle("has", !!src);
+    pic.style.backgroundImage = src ? "url('" + src + "?t=" + Date.now() + "')" : "";
+    card.querySelector(".del").hidden = !src;
+    if (src && !had) bump(-1);
+    if (!src && had) bump(1);
+  }
+  function send(card, file) {
+    if (!file || !file.type.startsWith("image/")) { status(card, "Нужен файл-картинка", "err"); return; }
+    if (file.size > 5 * 1024 * 1024) { status(card, "Больше 5 МБ", "err"); return; }
+    var fd = new FormData(); fd.append("photo", file);
+    status(card, "Загружаю…");
+    fetch(url(card.dataset.pk, "upload"), { method: "POST", body: fd, headers: { "X-CSRFToken": csrf } })
+      .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+      .then(function (x) {
+        if (x.ok && x.j.ok) { setPic(card, x.j.url); status(card, "Сохранено ✓", "ok"); }
+        else status(card, (x.j && x.j.error) || "Ошибка загрузки", "err");
+      })
+      .catch(function () { status(card, "Нет связи с сервером", "err"); });
+  }
+  document.querySelectorAll(".card").forEach(function (card) {
+    var input = card.querySelector("input[type=file]");
+    input.addEventListener("change", function () { send(card, input.files[0]); input.value = ""; });
+    card.querySelector(".pic").addEventListener("click", function () { input.click(); });
+    card.querySelector(".del").addEventListener("click", function () {
+      if (!confirm("Удалить фото?")) return;
+      fetch(url(card.dataset.pk, "delete"), { method: "POST", headers: { "X-CSRFToken": csrf } })
+        .then(function (r) { if (r.ok) { setPic(card, ""); status(card, "Фото удалено"); } });
+    });
+    ["dragenter", "dragover"].forEach(function (e) {
+      card.addEventListener(e, function (ev) { ev.preventDefault(); card.classList.add("drag"); });
+    });
+    ["dragleave", "drop"].forEach(function (e) {
+      card.addEventListener(e, function (ev) { ev.preventDefault(); card.classList.remove("drag"); });
+    });
+    card.addEventListener("drop", function (ev) { send(card, ev.dataTransfer.files[0]); });
+  });
+  // Файл, брошенный мимо карточки, не должен открываться в браузере вместо загрузки.
+  ["dragover", "drop"].forEach(function (e) { window.addEventListener(e, function (ev) { ev.preventDefault(); }); });
+})();
+</script>
+</body>
+</html>

@@ -3,7 +3,7 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path
 
-from shop import views
+from shop import photo_views, views
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -37,6 +37,9 @@ urlpatterns = [
     path("staff/orders/feed/", views.staff_orders_feed, name="staff_orders_feed"),
     path("staff/orders/<int:pk>/status/", views.staff_order_status, name="staff_order_status"),
     path("staff/books/<int:pk>/status/", views.staff_book_status, name="staff_book_status"),
+    path("staff/photos/", photo_views.staff_photos, name="staff_photos"),
+    path("staff/photos/<str:kind>/<int:pk>/upload/", photo_views.staff_photo_upload, name="staff_photo_upload"),
+    path("staff/photos/<str:kind>/<int:pk>/delete/", photo_views.staff_photo_delete, name="staff_photo_delete"),
     path("staff/qr/", views.staff_qr_print, name="staff_qr_print"),
     path("staff/qr/<int:pk>.png", views.staff_qr_image, name="staff_qr_image"),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
